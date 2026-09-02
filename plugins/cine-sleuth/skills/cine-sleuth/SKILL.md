@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `0.2.0`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `0.3.0`.
 
 ## Deliver the requested analysis
 
@@ -46,7 +46,7 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    python scripts/analyze_chunks.py "C:/absolute/output/cine-sleuth-work/manifest.json" --jobs 2
    ```
 
-   The configured service extracts chunk-level evidence only. It is not the final report author.
+   Before chunk analysis, the script creates one `video_understanding` task and uploads the untouched original video directly to private Tencent COS storage through a short-lived signed PUT URL. The original never passes through Gemini or the Lab API process. Each proxy chunk is attached to that parent task. The configured service extracts chunk-level evidence only; it is not the final report author.
 4. Globalize timestamps and remove obvious overlap duplicates:
 
    ```powershell
@@ -56,6 +56,8 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
 5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
 
 Never request or store the Gemini Router Key. It remains encrypted in LycheeAILab's server-side credential store. The local token file contains only the user's revocable `lych_live_` API Key. If authorization expires, run `python scripts/lab_auth.py --force` and resume cached chunks.
+
+The manifest stores only the Lab task ID and upload state so interrupted work can resume without uploading the original again. Never print or persist the short-lived COS signed URL.
 
 ## Preserve analysis invariants
 

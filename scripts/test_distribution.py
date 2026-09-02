@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -39,6 +39,7 @@ def main() -> int:
             "cine-sleuth/scripts/prepare_video.py",
             "cine-sleuth/scripts/analyze_chunks.py",
             "cine-sleuth/scripts/lab_auth.py",
+            "cine-sleuth/scripts/lab_video.py",
             "cine-sleuth/scripts/assemble_evidence.py",
             "cine-sleuth/references/multimodal-segment-prompt.md",
             "cine-sleuth/references/report-guide.md",

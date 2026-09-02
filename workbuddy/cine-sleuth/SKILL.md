@@ -7,7 +7,7 @@ description: Analyze local videos in WorkBuddy and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.2.0`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.3.0`.
 
 ## Deliver the user's result
 
@@ -46,6 +46,8 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/analyze_chunks.py" `
   "C:/absolute/output/cine-sleuth-work/manifest.json" `
   --jobs 2
 ```
+
+This command first registers one `video_understanding` task and uploads the untouched original video directly to private COS through a short-lived signed PUT URL. It then associates every proxy chunk with that task. Never print or persist the signed URL.
 
 Assemble global evidence:
 

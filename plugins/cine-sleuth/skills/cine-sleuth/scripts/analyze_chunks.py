@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 
 from lab_auth import DEFAULT_BASE_URL, authorized_token
+from lab_video import complete_task, ensure_original_uploaded
 
 
 def render_prompt(template: str, manifest: dict, chunk: dict) -> str:
@@ -54,6 +55,8 @@ def extract_json_text(response: dict) -> str:
 def request_chunk(
     token: str,
     base_url: str,
+    job_id: str,
+    chunk_key: str,
     prompt: str,
     video_path: Path,
     timeout: float,
@@ -61,6 +64,8 @@ def request_chunk(
     boundary = f"----CineSleuth{random.getrandbits(96):024x}"
     video_data = video_path.read_bytes()
     body = bytearray()
+    body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"jobId\"\r\n\r\n{job_id}\r\n".encode("utf-8"))
+    body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"chunkKey\"\r\n\r\n{chunk_key}\r\n".encode("utf-8"))
     body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"prompt\"\r\n\r\n{prompt}\r\n".encode("utf-8"))
     body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"video\"; filename=\"{video_path.name}\"\r\nContent-Type: video/mp4\r\n\r\n".encode("utf-8"))
     body.extend(video_data)
@@ -71,7 +76,7 @@ def request_chunk(
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "CineSleuth-Skill/0.2",
+            "User-Agent": "CineSleuth-Skill/0.3",
         },
         method="POST",
     )
@@ -93,6 +98,7 @@ def analyze_one(
     results_dir: Path,
     token: str,
     base_url: str,
+    job_id: str,
     retries: int,
     timeout: float,
     force: bool,
@@ -110,7 +116,7 @@ def analyze_one(
     last_error: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            evidence = request_chunk(token, base_url, prompt, video_path, timeout)
+            evidence = request_chunk(token, base_url, job_id, chunk["chunk_id"], prompt, video_path, timeout)
             evidence.setdefault("_cine_sleuth", {})
             evidence["_cine_sleuth"].update(
                 {
@@ -147,6 +153,7 @@ def main() -> None:
     token = authorized_token(args.base_url, args.force_login)
     manifest_path = args.manifest.expanduser().resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    job_id = ensure_original_uploaded(manifest_path, manifest, token, args.base_url)
     results_dir = (args.results_dir or manifest_path.parent / "results").expanduser().resolve()
     results_dir.mkdir(parents=True, exist_ok=True)
     prompt_path = args.prompt or Path(__file__).resolve().parent.parent / "references" / "multimodal-segment-prompt.md"
@@ -164,6 +171,7 @@ def main() -> None:
                 results_dir,
                 token,
                 args.base_url,
+                job_id,
                 max(0, args.retries),
                 args.timeout,
                 args.force,
@@ -185,6 +193,8 @@ def main() -> None:
     print(json.dumps(summary, ensure_ascii=False))
     if failures:
         raise SystemExit(1)
+    completion = complete_task(args.base_url, token, job_id)
+    print(json.dumps(completion, ensure_ascii=False))
 
 
 if __name__ == "__main__":
