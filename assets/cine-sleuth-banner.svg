@@ -33,6 +33,8 @@
     <path d="M820 0V360M1080 0V360"/>
   </g>
 
+  <text x="1110" y="40" text-anchor="end" fill="#E6C56E" font-size="15" font-weight="600" font-family="Inter,Segoe UI,Arial,sans-serif" letter-spacing="3">LYCHEEAILAB · OPEN SOURCE</text>
+
   <g transform="translate(865 62)">
     <rect x="0" y="0" width="245" height="236" rx="22" fill="#0B0C10" stroke="url(#gold)" stroke-width="3"/>
     <path d="M32 0V236M213 0V236" stroke="#D5A43A" opacity="0.38" stroke-dasharray="7 10"/>

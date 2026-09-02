@@ -6,6 +6,7 @@
 
 <p align="center">
   <strong>让每一帧都成为证据。</strong><br />
+  由 <a href="https://github.com/LycheeAILab"><strong>LycheeAILab</strong></a> 开源打造<br />
   面向智能体的视频拉片 Skill：提取台词、重建场景、拆解镜头，并把长视频变成可验证的结构化证据。
 </p>
 
@@ -13,6 +14,7 @@
   <img alt="Python 3.9+" src="https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white" />
   <img alt="FFmpeg" src="https://img.shields.io/badge/FFmpeg-required-007808?logo=ffmpeg&logoColor=white" />
   <img alt="Skill" src="https://img.shields.io/badge/Agent-Skill-D4A72C" />
+  <img alt="LycheeAILab" src="https://img.shields.io/badge/by-LycheeAILab-8A5A16" />
   <img alt="Status" src="https://img.shields.io/badge/status-alpha-C05A37" />
 </p>
 
@@ -192,6 +194,6 @@ cine-sleuth/
 
 <p align="center">
   <strong>CineSleuth · 镜探</strong><br />
-  看见画面，也看见画面之间的关系。
+  看见画面，也看见画面之间的关系。<br />
+  An open-source project by <a href="https://github.com/LycheeAILab">LycheeAILab</a>.
 </p>
-
