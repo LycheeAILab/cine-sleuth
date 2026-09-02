@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import concurrent.futures
 import json
 import os
@@ -12,12 +11,10 @@ import random
 import re
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from pathlib import Path
 
-
-DEFAULT_BASE_URL = "https://router.lycheeai.com.cn/v1beta/models/{model}:generateContent"
+from lab_auth import DEFAULT_BASE_URL, authorized_token
 
 
 def render_prompt(template: str, manifest: dict, chunk: dict) -> str:
@@ -55,32 +52,27 @@ def extract_json_text(response: dict) -> str:
 
 
 def request_chunk(
-    api_key: str,
+    token: str,
     base_url: str,
-    model: str,
     prompt: str,
     video_path: Path,
     timeout: float,
 ) -> dict:
-    url = base_url.format(model=urllib.parse.quote(model, safe=""))
-    separator = "&" if "?" in url else "?"
-    url = f"{url}{separator}key={urllib.parse.quote(api_key, safe='')}"
-    video_data = base64.b64encode(video_path.read_bytes()).decode("ascii")
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                    {"inline_data": {"mime_type": "video/mp4", "data": video_data}},
-                ]
-            }
-        ],
-        "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
-    }
+    boundary = f"----CineSleuth{random.getrandbits(96):024x}"
+    video_data = video_path.read_bytes()
+    body = bytearray()
+    body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"prompt\"\r\n\r\n{prompt}\r\n".encode("utf-8"))
+    body.extend(f"--{boundary}\r\nContent-Disposition: form-data; name=\"video\"; filename=\"{video_path.name}\"\r\nContent-Type: video/mp4\r\n\r\n".encode("utf-8"))
+    body.extend(video_data)
+    body.extend(f"\r\n--{boundary}--\r\n".encode("ascii"))
     request = urllib.request.Request(
-        url,
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        f"{base_url.rstrip('/')}/api/cine-sleuth/analyze",
+        data=bytes(body),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "User-Agent": "CineSleuth-Skill/0.2",
+        },
         method="POST",
     )
     try:
@@ -99,9 +91,8 @@ def analyze_one(
     chunk: dict,
     prompt_template: str,
     results_dir: Path,
-    api_key: str,
+    token: str,
     base_url: str,
-    model: str,
     retries: int,
     timeout: float,
     force: bool,
@@ -119,14 +110,14 @@ def analyze_one(
     last_error: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            evidence = request_chunk(api_key, base_url, model, prompt, video_path, timeout)
+            evidence = request_chunk(token, base_url, prompt, video_path, timeout)
             evidence.setdefault("_cine_sleuth", {})
             evidence["_cine_sleuth"].update(
                 {
                     "chunk_id": chunk["chunk_id"],
                     "source_start_seconds": chunk["source_start_seconds"],
                     "source_end_seconds": chunk["source_end_seconds"],
-                    "model": model,
+                    "model": "gemini-2.5-pro",
                 }
             )
             temporary = output.with_suffix(".json.tmp")
@@ -145,19 +136,15 @@ def main() -> None:
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--results-dir", type=Path)
     parser.add_argument("--prompt", type=Path)
-    parser.add_argument("--model", default=os.environ.get("LYCHEE_MODEL"))
-    parser.add_argument("--base-url", default=os.environ.get("LYCHEE_MODEL_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--base-url", default=os.environ.get("LYCHEE_LAB_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--force-login", action="store_true")
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
-    api_key = os.environ.get("LYCHEE_API_KEY")
-    if not api_key:
-        raise SystemExit("Set LYCHEE_API_KEY in the process environment before running this script.")
-    if not args.model:
-        raise SystemExit("Set LYCHEE_MODEL in the process environment or pass --model.")
+    token = authorized_token(args.base_url, args.force_login)
     manifest_path = args.manifest.expanduser().resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     results_dir = (args.results_dir or manifest_path.parent / "results").expanduser().resolve()
@@ -175,9 +162,8 @@ def main() -> None:
                 chunk,
                 prompt_template,
                 results_dir,
-                api_key,
+                token,
                 args.base_url,
-                args.model,
                 max(0, args.retries),
                 args.timeout,
                 args.force,

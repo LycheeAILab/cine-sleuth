@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `0.1.0`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `0.2.0`.
 
 ## Deliver the requested analysis
 
@@ -32,6 +32,8 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    python scripts/doctor.py
    ```
 
+   If it reports `authenticated: false`, run `python scripts/lab_auth.py`. This opens LycheeAILab in the browser. The randomized `127.0.0.1` callback belongs to the local authentication process and receives only the user's revocable Lab API Key.
+
 2. Create a task-specific work directory outside the installed Skill. Prepare media evidence:
 
    ```powershell
@@ -53,7 +55,7 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
 
 5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
 
-If `LYCHEE_API_KEY` or `LYCHEE_MODEL` is unavailable, report that CineSleuth runtime access is not configured. Never request, print, persist, or commit a provider credential. Never place keys in command arguments when an environment variable is available.
+Never request or store the Gemini Router Key. It remains encrypted in LycheeAILab's server-side credential store. The local token file contains only the user's revocable `lych_live_` API Key. If authorization expires, run `python scripts/lab_auth.py --force` and resume cached chunks.
 
 ## Preserve analysis invariants
 

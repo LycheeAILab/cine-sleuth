@@ -1,4 +1,4 @@
-param([string]$Version = "0.1.0")
+param([string]$Version = "0.2.0")
 
 $ErrorActionPreference = "Stop"
 $rawRoot = "https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist"
@@ -36,4 +36,3 @@ if (-not $python) { throw "Python 3.9 or newer is required by the Skill runtime"
 & $python.Source (Join-Path $target "scripts\doctor.py")
 if ($LASTEXITCODE -ne 0) { throw "CineSleuth doctor failed" }
 Write-Host "CineSleuth $Version is installed for WorkBuddy at $target"
-

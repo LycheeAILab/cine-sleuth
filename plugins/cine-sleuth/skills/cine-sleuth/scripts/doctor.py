@@ -9,6 +9,8 @@ from pathlib import Path
 import shutil
 import sys
 
+from lab_auth import DEFAULT_BASE_URL, load_token, validate_token
+
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
@@ -19,6 +21,7 @@ def main() -> int:
         ROOT / "SKILL.md",
         ROOT / "scripts" / "prepare_video.py",
         ROOT / "scripts" / "analyze_chunks.py",
+        ROOT / "scripts" / "lab_auth.py",
         ROOT / "scripts" / "assemble_evidence.py",
         ROOT / "references" / "multimodal-segment-prompt.md",
         ROOT / "references" / "report-guide.md",
@@ -29,15 +32,20 @@ def main() -> int:
         "ffprobe": shutil.which("ffprobe") is not None,
         "package_files": all(path.is_file() for path in required),
     }
-    runtime = {
-        "api_key_configured": bool(os.environ.get("LYCHEE_API_KEY")),
-        "model_configured": bool(os.environ.get("LYCHEE_MODEL")),
+    token = load_token()
+    authenticated = bool(token and validate_token(token, os.environ.get("LYCHEE_LAB_BASE_URL", DEFAULT_BASE_URL)))
+    installed = all(checks.values())
+    result = {
+        "version": VERSION,
+        "installed": installed,
+        "authenticated": authenticated,
+        "runtime_ready": authenticated,
+        "ok": installed,
+        "checks": checks,
     }
-    result = {"version": VERSION, "ok": all(checks.values()), "checks": checks, "runtime": runtime}
     print(json.dumps(result, ensure_ascii=False))
-    return 0 if result["ok"] else 1
+    return 0 if installed else 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -7,7 +7,7 @@ description: Analyze local videos in WorkBuddy and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.1.0`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.2.0`.
 
 ## Deliver the user's result
 
@@ -22,6 +22,14 @@ When installation health is unknown, run the no-upload doctor:
 ```powershell
 python "${CODEBUDDY_SKILL_DIR}/scripts/doctor.py"
 ```
+
+If it reports `authenticated: false`, run:
+
+```powershell
+python "${CODEBUDDY_SKILL_DIR}/scripts/lab_auth.py"
+```
+
+This opens LycheeAILab login and returns the user's revocable Lab credential to a randomized local callback. It never returns the Gemini Router Key.
 
 Prepare local evidence and proxy chunks:
 
@@ -49,7 +57,7 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/assemble_evidence.py" `
 
 Read `${CODEBUDDY_SKILL_DIR}/references/report-guide.md`. Use WorkBuddy's own reasoning to merge cross-chunk scenes and author the final report. Never make another remote call merely to summarize chunk results.
 
-If `LYCHEE_API_KEY` or `LYCHEE_MODEL` is unavailable, report that CineSleuth runtime access is not configured. Never request or expose provider credentials.
+Never request or expose the Gemini Router Key. It remains encrypted on the Lab server. If the user's Lab authorization expires, run `lab_auth.py --force` and resume cached chunks.
 
 ## Preserve the evidence contract
 

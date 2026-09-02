@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -38,6 +38,7 @@ def main() -> int:
             "cine-sleuth/scripts/doctor.py",
             "cine-sleuth/scripts/prepare_video.py",
             "cine-sleuth/scripts/analyze_chunks.py",
+            "cine-sleuth/scripts/lab_auth.py",
             "cine-sleuth/scripts/assemble_evidence.py",
             "cine-sleuth/references/multimodal-segment-prompt.md",
             "cine-sleuth/references/report-guide.md",
@@ -48,6 +49,7 @@ def main() -> int:
         skill = archive.read("cine-sleuth/SKILL.md").decode("utf-8")
         require("${CODEBUDDY_SKILL_DIR}" in skill, "WorkBuddy Skill directory variable missing")
         require(archive.read("cine-sleuth/VERSION").decode("utf-8").strip() == VERSION, "VERSION mismatch")
+        require("LYCHEE_API_KEY" not in skill and "LYCHEE_MODEL" not in skill, "Skill still asks for provider credentials")
 
     print("Distribution OK: Codex Plugin plus self-contained WorkBuddy Skill package.")
     return 0
@@ -55,4 +57,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
