@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""Send CineSleuth proxy chunks to a multimodal service and cache evidence."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import concurrent.futures
+import json
+import os
+import random
+import re
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+
+DEFAULT_BASE_URL = "https://router.lycheeai.com.cn/v1beta/models/{model}:generateContent"
+
+
+def render_prompt(template: str, manifest: dict, chunk: dict) -> str:
+    values = {
+        "CHUNK_ID": chunk["chunk_id"],
+        "GLOBAL_OFFSET_SECONDS": chunk["source_start_seconds"],
+        "CHUNK_DURATION_SECONDS": chunk["duration_seconds"],
+        "TOTAL_DURATION_SECONDS": manifest["source"]["duration_seconds"],
+        "OVERLAP_BEFORE_SECONDS": chunk["overlap_before_seconds"],
+        "OVERLAP_AFTER_SECONDS": chunk["overlap_after_seconds"],
+    }
+    rendered = template
+    for key, value in values.items():
+        rendered = rendered.replace("{{" + key + "}}", str(value))
+    return rendered
+
+
+def extract_prompt(markdown: str) -> str:
+    match = re.search(r"```text\s*(.*?)\s*```", markdown, re.DOTALL)
+    return match.group(1) if match else markdown
+
+
+def extract_json_text(response: dict) -> str:
+    try:
+        parts = response["candidates"][0]["content"]["parts"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(f"Analysis response contains no candidate: {json.dumps(response, ensure_ascii=False)[:1000]}") from exc
+    text = "\n".join(part.get("text", "") for part in parts if isinstance(part, dict)).strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    if not text:
+        raise RuntimeError("Analysis service returned an empty candidate.")
+    return text
+
+
+def request_chunk(
+    api_key: str,
+    base_url: str,
+    model: str,
+    prompt: str,
+    video_path: Path,
+    timeout: float,
+) -> dict:
+    url = base_url.format(model=urllib.parse.quote(model, safe=""))
+    separator = "&" if "?" in url else "?"
+    url = f"{url}{separator}key={urllib.parse.quote(api_key, safe='')}"
+    video_data = base64.b64encode(video_path.read_bytes()).decode("ascii")
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": "video/mp4", "data": video_data}},
+                ]
+            }
+        ],
+        "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
+    }
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Analysis service HTTP {exc.code}: {body[:1000]}") from exc
+    if not body.strip():
+        raise RuntimeError("Analysis service returned an empty HTTP response.")
+    return json.loads(extract_json_text(json.loads(body)))
+
+
+def analyze_one(
+    manifest: dict,
+    chunk: dict,
+    prompt_template: str,
+    results_dir: Path,
+    api_key: str,
+    base_url: str,
+    model: str,
+    retries: int,
+    timeout: float,
+    force: bool,
+) -> dict:
+    output = results_dir / f"{chunk['chunk_id']}.json"
+    if output.exists() and not force:
+        json.loads(output.read_text(encoding="utf-8"))
+        return {"chunk_id": chunk["chunk_id"], "status": "cached", "output": str(output)}
+
+    prompt = render_prompt(prompt_template, manifest, chunk)
+    video_path = Path(chunk["path"])
+    if not video_path.is_file():
+        raise RuntimeError(f"Chunk file not found: {video_path}")
+
+    last_error: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            evidence = request_chunk(api_key, base_url, model, prompt, video_path, timeout)
+            evidence.setdefault("_cine_sleuth", {})
+            evidence["_cine_sleuth"].update(
+                {
+                    "chunk_id": chunk["chunk_id"],
+                    "source_start_seconds": chunk["source_start_seconds"],
+                    "source_end_seconds": chunk["source_end_seconds"],
+                    "model": model,
+                }
+            )
+            temporary = output.with_suffix(".json.tmp")
+            temporary.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+            temporary.replace(output)
+            return {"chunk_id": chunk["chunk_id"], "status": "analyzed", "output": str(output)}
+        except Exception as exc:
+            last_error = exc
+            if attempt < retries:
+                time.sleep(min(12.0, (2**attempt) + random.random()))
+    raise RuntimeError(f"{chunk['chunk_id']} failed after {retries + 1} attempts: {last_error}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("manifest", type=Path)
+    parser.add_argument("--results-dir", type=Path)
+    parser.add_argument("--prompt", type=Path)
+    parser.add_argument("--model", default=os.environ.get("LYCHEE_MODEL"))
+    parser.add_argument("--base-url", default=os.environ.get("LYCHEE_MODEL_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+
+    api_key = os.environ.get("LYCHEE_API_KEY")
+    if not api_key:
+        raise SystemExit("Set LYCHEE_API_KEY in the process environment before running this script.")
+    if not args.model:
+        raise SystemExit("Set LYCHEE_MODEL in the process environment or pass --model.")
+    manifest_path = args.manifest.expanduser().resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    results_dir = (args.results_dir or manifest_path.parent / "results").expanduser().resolve()
+    results_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = args.prompt or Path(__file__).resolve().parent.parent / "references" / "multimodal-segment-prompt.md"
+    prompt_template = extract_prompt(prompt_path.read_text(encoding="utf-8"))
+
+    completed = []
+    failures = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as executor:
+        future_map = {
+            executor.submit(
+                analyze_one,
+                manifest,
+                chunk,
+                prompt_template,
+                results_dir,
+                api_key,
+                args.base_url,
+                args.model,
+                max(0, args.retries),
+                args.timeout,
+                args.force,
+            ): chunk["chunk_id"]
+            for chunk in manifest["chunks"]
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            chunk_id = future_map[future]
+            try:
+                result = future.result()
+                completed.append(result)
+                print(json.dumps(result, ensure_ascii=False), flush=True)
+            except Exception as exc:
+                failure = {"chunk_id": chunk_id, "status": "failed", "error": str(exc)}
+                failures.append(failure)
+                print(json.dumps(failure, ensure_ascii=False), flush=True)
+
+    summary = {"completed": len(completed), "failed": len(failures), "results_dir": str(results_dir)}
+    print(json.dumps(summary, ensure_ascii=False))
+    if failures:
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

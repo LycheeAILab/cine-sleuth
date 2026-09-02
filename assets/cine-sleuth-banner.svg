@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">CineSleuth · 镜探</title>
+  <desc id="desc">A cinematic gold-on-black banner with a frame scanner motif.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#090B10"/>
+      <stop offset="0.55" stop-color="#14121A"/>
+      <stop offset="1" stop-color="#201408"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9E6B19"/>
+      <stop offset="0.5" stop-color="#F3D47A"/>
+      <stop offset="1" stop-color="#B97A1B"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#E7B94C" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#E7B94C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+    <pattern id="grain" width="60" height="60" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="12" r="0.8" fill="#fff" opacity="0.08"/>
+      <circle cx="38" cy="32" r="0.6" fill="#fff" opacity="0.05"/>
+      <circle cx="52" cy="9" r="0.5" fill="#fff" opacity="0.06"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="28" fill="url(#grain)"/>
+  <ellipse cx="965" cy="178" rx="280" ry="220" fill="url(#glow)" filter="url(#soft)"/>
+
+  <g opacity="0.24" stroke="#D8A63A" fill="none">
+    <path d="M0 72H1200M0 288H1200"/>
+    <path d="M820 0V360M1080 0V360"/>
+  </g>
+
+  <g transform="translate(865 62)">
+    <rect x="0" y="0" width="245" height="236" rx="22" fill="#0B0C10" stroke="url(#gold)" stroke-width="3"/>
+    <path d="M32 0V236M213 0V236" stroke="#D5A43A" opacity="0.38" stroke-dasharray="7 10"/>
+    <circle cx="122.5" cy="118" r="72" fill="none" stroke="#E6BD5A" stroke-width="2" opacity="0.36"/>
+    <circle cx="122.5" cy="118" r="45" fill="none" stroke="#F1D37D" stroke-width="3"/>
+    <circle cx="122.5" cy="118" r="13" fill="#E8BC55"/>
+    <path d="M122.5 51V185M56 118H189" stroke="#E9BF5B" stroke-width="1.5" opacity="0.52"/>
+    <path d="M64 42h28M64 42v28M181 42h-28M181 42v28M64 194h28M64 194v-28M181 194h-28M181 194v-28" stroke="#F2D37A" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(82 83)">
+    <rect x="0" y="0" width="72" height="8" rx="4" fill="url(#gold)"/>
+    <text x="0" y="82" fill="#F8F2E3" font-size="68" font-weight="700" font-family="Inter,Segoe UI,Arial,sans-serif" letter-spacing="1">CineSleuth</text>
+    <text x="4" y="139" fill="#DDB24F" font-size="35" font-weight="600" font-family="Microsoft YaHei,Noto Sans SC,Segoe UI,sans-serif" letter-spacing="8">镜 探</text>
+    <text x="4" y="193" fill="#B9B5AD" font-size="20" font-family="Inter,Segoe UI,Arial,sans-serif" letter-spacing="3">EVERY FRAME LEAVES EVIDENCE</text>
+  </g>
+
+  <rect x="1.5" y="1.5" width="1197" height="357" rx="26.5" fill="none" stroke="#C79531" stroke-opacity="0.34" stroke-width="3"/>
+</svg>

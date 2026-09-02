@@ -1,0 +1,9 @@
+interface:
+  display_name: "镜探 CineSleuth"
+  short_description: "逐镜拆解台词、场景与视听语言"
+  brand_color: "#D4A72C"
+  default_prompt: "Use $cine-sleuth to produce an evidence-backed shot-by-shot breakdown of this video."
+
+policy:
+  allow_implicit_invocation: true
+
