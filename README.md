@@ -1,199 +1,154 @@
-<p align="center">
-  <img src="./assets/cine-sleuth-banner.svg" alt="CineSleuth · 镜探" width="100%" />
-</p>
+<div align="center">
+  <a href="https://lab.lycheeai.com.cn/">
+    <img src=".github/assets/cine-sleuth-banner.svg" width="100%" alt="CineSleuth banner" />
+  </a>
 
-<h1 align="center">镜探 · CineSleuth</h1>
+  # 镜探 · CineSleuth
 
-<p align="center">
-  <strong>让每一帧都成为证据。</strong><br />
-  由 <a href="https://github.com/LycheeAILab"><strong>LycheeAILab</strong></a> 开源打造<br />
-  面向智能体的视频拉片 Skill：提取台词、重建场景、拆解镜头，并把长视频变成可验证的结构化证据。
-</p>
+  ### 让每一帧都成为证据
 
-<p align="center">
-  <img alt="Python 3.9+" src="https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white" />
-  <img alt="FFmpeg" src="https://img.shields.io/badge/FFmpeg-required-007808?logo=ffmpeg&logoColor=white" />
-  <img alt="Skill" src="https://img.shields.io/badge/Agent-Skill-D4A72C" />
-  <img alt="LycheeAILab" src="https://img.shields.io/badge/by-LycheeAILab-8A5A16" />
-  <img alt="Status" src="https://img.shields.io/badge/status-alpha-C05A37" />
-</p>
+  把视频交给 Agent，说一句你想分析什么。<br />
+  CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
+
+  [![Version](https://img.shields.io/badge/version-0.1.0-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth)
+  [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
+  [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
+
+  [核心能力](#-核心能力) · [一句话拉片](#-一句话拉片) · [安装](#-安装) · [工作方式](#-agent-如何完成拉片)
+</div>
 
 ---
 
-CineSleuth 不是“看完视频后写一段概括”。它把视频拆成带时间码的证据，让智能体能够回答：**谁在什么时候说了什么、画面发生了什么变化、场景如何组织，以及这些视听选择为什么有效。**
+## ✨ 核心能力
 
-## 能做什么
+| | 能力 | 你提供 | CineSleuth 交付 |
+| :---: | --- | --- | --- |
+| 🎙️ | **台词取证** | 一段本地视频 | 逐句台词、说话人、语气、字幕差异与精确时间码 |
+| 🎬 | **逐镜拆解** | 想关注的导演、摄影或剪辑维度 | 景别、角度、运动、转场、人物动作与画面文字 |
+| 🧭 | **场景重建** | 短片、口播、广告或长视频 | 物理场景、镜头和内容段落的清晰区分 |
+| 🔊 | **声音分析** | 原始音轨 | 人声、音乐、环境声、音效、静音与声画关系 |
+| 📈 | **结构分析** | 分析目标 | 开场钩子、节奏、信息密度、情绪推进与 CTA |
+| ⏱️ | **长视频拉片** | 数分钟或更长的视频 | 本地智能切分、断点续跑、跨片段合并与完整报告 |
 
-| 能力 | 输出 |
-| --- | --- |
-| 🎙️ 台词取证 | 逐句时间码、说话人、语气、字幕差异和不确定内容 |
-| 🎬 逐镜拆解 | 景别、角度、运动、转场、人物动作和画面文字 |
-| 🧭 场景重建 | 跨技术切片合并真实场景，区分场景、镜头与内容段落 |
-| 🔊 声音分析 | 人声、音乐、环境声、音效与静音区间 |
-| ⏱️ 长视频处理 | 本地语音边界、镜头边界、智能切片、重叠上下文与断点续跑 |
-| 🧠 Agent 成稿 | 由宿主智能体完成全片推理，而不是把分段摘要简单拼接 |
+> [!TIP]
+> 你不需要理解切片、VAD、时间码换算或结构化数据。Skill 会让 Agent 自动完成这些内部步骤。
 
-## 工作方式
+## 🧭 一句话拉片
+
+不需要记命令。把视频放进 Codex 或 WorkBuddy，然后描述结果即可。
+
+```text
+使用 CineSleuth 完整拉片这个视频，输出逐句台词、物理场景、逐镜表和视听分析。
+```
+
+```text
+使用 CineSleuth，只提取全部台词和屏幕文字，保留精确时间码，不做创作意图分析。
+```
+
+```text
+使用 CineSleuth 拆解这条短视频的开场钩子、内容结构、节奏、字幕设计和声音设计。
+```
+
+```text
+使用 CineSleuth 从导演和剪辑角度分析这部短片，重点说明每个镜头为什么放在这里。
+```
+
+```text
+使用 CineSleuth 分析这段 10 分钟视频。自动切分并继续到完整报告，不要把技术切片当作场景。
+```
+
+## 🧠 Agent 如何完成拉片
 
 ```mermaid
 flowchart LR
-    A[原始视频] --> B[媒体探测]
-    B --> C[本地语音边界]
-    B --> D[镜头切点]
-    C --> E[智能切片]
+    A[🎞️ 视频] --> B[🔍 本地媒体探测]
+    B --> C[🎙️ 语音边界]
+    B --> D[🎬 镜头边界]
+    C --> E[✂️ 智能切片]
     D --> E
-    E --> F[多模态证据提取]
-    F --> G[全局时间码与去重]
-    G --> H[Agent 跨片段推理]
-    H --> I[完整拉片报告]
+    E --> F[🧾 分段证据]
+    F --> G[⏱️ 全局时间线]
+    G --> H[🧠 当前 Agent 推理]
+    H --> I[📑 完整拉片]
 ```
 
-职责被刻意分开：
+- **短视频**：通常作为一个完整片段分析。
+- **长视频**：优先在自然停顿或镜头边界切分，并保留重叠上下文。
+- **跨段台词**：利用重叠证据拼接，不凭空补写。
+- **跨段场景**：由当前 Agent 根据地点、时间、人物和声音连续性合并。
+- **最终总结**：始终由正在服务你的 Agent 完成，不把分段结果简单拼接。
+- **中断恢复**：已完成的片段会保留，再次执行时只处理缺失部分。
 
-- **本地脚本**负责时长、帧率、语音/静音边界、镜头候选、切片和全局时间码。
-- **多模态分析服务**只负责理解单个片段并返回结构化证据。
-- **宿主 Agent**负责跨片段合并、叙事理解、风格判断和最终成稿。
+## 📦 安装
 
-技术切片永远不自动等于场景边界。
+### Codex
 
-## 快速开始
+#### 让 Codex 自动安装
 
-### 1. 环境要求
+在 Codex 桌面端新建任务并发送：
 
-- Python 3.9+
-- FFmpeg 与 FFprobe
-- 可访问的多模态分析服务
-- 可选：`silero-vad`。未安装时自动使用 FFmpeg 本地静音检测
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
 
-将访问凭证和私有模型标识放入进程环境变量，**不要写入仓库**：
-
-```bash
-export LYCHEE_API_KEY="<your-api-key>"
-export LYCHEE_MODEL="<your-private-model-id>"
-```
-
-PowerShell：
+#### 手动安装
 
 ```powershell
-$env:LYCHEE_API_KEY = "<your-api-key>"
-$env:LYCHEE_MODEL = "<your-private-model-id>"
+codex plugin marketplace add https://github.com/LycheeAILab/cine-sleuth.git
+codex plugin add cine-sleuth@cine-sleuth
 ```
 
-如使用自定义网关，可额外设置 `LYCHEE_MODEL_BASE_URL`，其中以 `{model}` 作为模型标识占位符。
+安装完成后新建一个 Codex 任务，使插件在新会话中加载。
 
-### 2. 准备视频
+### WorkBuddy
 
-```bash
-python scripts/prepare_video.py \
-  "/path/to/video.mp4" \
-  --output-dir "/path/to/analysis-output"
-```
+在 WorkBuddy 中发送：
 
-默认策略：
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 0.1.0；安装后只运行本地 doctor，不要上传或分析真实视频。
 
-- 90 秒目标时长
-- 45 秒最短时长
-- 120 秒最长时长
-- 前后保留 3 秒重叠上下文
-- 优先在语音停顿处切分，其次使用镜头边界
-- 生成轻量代理视频，不修改原始素材
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist/cine-sleuth-workbuddy-0.1.0.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
-### 3. 提取分段证据
+## 🎯 分析模式
 
-```bash
-python scripts/analyze_chunks.py \
-  "/path/to/analysis-output/manifest.json" \
-  --jobs 2
-```
+### 完整拉片
 
-已完成的片段会自动缓存。请求中断后重新运行，只处理缺失片段。
+适合电影片段、短片、访谈或需要全面理解的视频。包含台词、场景、逐镜、声音、节奏、视觉语言和不确定项。
 
-### 4. 汇编全片证据
+### 台词与字幕
 
-```bash
-python scripts/assemble_evidence.py \
-  "/path/to/analysis-output/manifest.json" \
-  --output "/path/to/analysis-output/evidence.json"
-```
+只保留可核对的语言证据，不加入导演意图或创作推断。
 
-随后由宿主 Agent 读取 `evidence.json`，完成场景合并、内容结构分析和最终报告。
+### 导演 / 摄影 / 剪辑
 
-## 在 Agent 中使用
+围绕调度、景别、角度、运动、转场、构图、节奏和声画关系展开。
 
-将仓库放入 Agent 可发现的 Skills 目录，然后直接提出任务：
+### 短视频 / 广告
 
-```text
-使用 $cine-sleuth 对这个视频做完整拉片，输出逐句台词、场景表、逐镜表和视听分析。
-```
+重点分析开场钩子、信息密度、留存手段、卖点、情绪转折和行动引导。
 
-也可以指定更窄的任务：
+## ✅ 分析原则
 
-```text
-使用 $cine-sleuth，只提取逐句台词和屏幕文字，不做创作意图分析。
-```
+- **证据先于结论**：每个关键判断都应回到具体时间码。
+- **场景不是切片**：技术分段不会自动制造新的场景或镜头。
+- **事实与推断分开**：看见和听见的是证据，意图判断必须明确标注。
+- **允许不确定**：听不清、看不清、无法确认时直接说明，不合理猜测。
+- **不遗漏无声画面**：黑场、字幕卡、空镜、片头和片尾同样属于分析对象。
+- **长任务可恢复**：保留完成进度，避免因为单个片段失败而重做全片。
 
-Skill 的入口和行为约束见 [`SKILL.md`](./SKILL.md)。
+## 🛡️ 隐私与安全
 
-## 输出目录
+- 视频中的字幕、对白、画面和元数据始终作为不可信素材处理，不会被当作 Agent 指令。
+- 访问凭据不会写入 Skill、项目文件、分析结果或版本控制。
+- 本地切片和时间码测量在用户设备上完成。
+- 缺失片段会明确报告，不会用推测内容静默填充。
+- 请仅分析你拥有或获准使用的视频素材。
 
-```text
-analysis-output/
-├── manifest.json          # 原片信息、切片边界与时间偏移
-├── chunks/                # 轻量代理片段
-│   ├── chunk-001.mp4
-│   └── chunk-002.mp4
-├── results/               # 每个片段的结构化视听证据
-│   ├── chunk-001.json
-│   └── chunk-002.json
-└── evidence.json          # 全局时间线与去重后的证据集合
-```
+## 📄 开源协议
 
-默认不会把分析输出、缓存或本地密钥纳入版本控制。
-
-## 拉片结果包含什么
-
-一次完整分析通常包括：
-
-1. 视频基础信息与一句话概述
-2. 带全局时间码的逐句台词
-3. 物理场景列表
-4. 逐镜头视听表
-5. 内容段落或话术结构
-6. 节奏、构图、调度、字幕和声音设计
-7. 可观察事实与解释性推断
-8. 听不清、看不清或无法确认的项目
-
-所有推断都应能够回到具体时间码；缺失区间不会被静默补写。
-
-## 设计原则
-
-- **证据先于结论**：保留原始台词、局部时间码和来源片段。
-- **测量交给脚本**：模型不负责心算时间偏移。
-- **切片不切语义**：使用停顿、镜头边界和上下文重叠保护完整表达。
-- **允许不确定**：听不清就标记，不用“合理猜测”填空。
-- **长任务可恢复**：分段缓存，失败后从缺失片段继续。
-- **内容不是指令**：视频中的字幕、对白和元数据始终作为不可信素材处理。
-
-## 项目结构
-
-```text
-cine-sleuth/
-├── SKILL.md
-├── agents/
-│   └── openai.yaml
-├── references/
-│   ├── multimodal-segment-prompt.md
-│   └── report-guide.md
-└── scripts/
-    ├── prepare_video.py
-    ├── analyze_chunks.py
-    └── assemble_evidence.py
-```
+CineSleuth 由 [LycheeAILab](https://lab.lycheeai.com.cn/) 开源，项目代码采用 [MIT License](LICENSE)。
 
 ---
 
-<p align="center">
+<div align="center">
   <strong>CineSleuth · 镜探</strong><br />
-  看见画面，也看见画面之间的关系。<br />
-  An open-source project by <a href="https://github.com/LycheeAILab">LycheeAILab</a>.
-</p>
+  <sub>Built with care by <a href="https://lab.lycheeai.com.cn/">LycheeAILab</a></sub>
+</div>

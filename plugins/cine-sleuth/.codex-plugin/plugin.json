@@ -1,0 +1,29 @@
+{
+  "name": "cine-sleuth",
+  "version": "0.1.0",
+  "description": "Evidence-backed video breakdowns for dialogue, scenes, shots, pacing, visual language, and sound.",
+  "author": {
+    "name": "LycheeAILab",
+    "url": "https://lab.lycheeai.com.cn/"
+  },
+  "homepage": "https://github.com/LycheeAILab/cine-sleuth",
+  "repository": "https://github.com/LycheeAILab/cine-sleuth",
+  "license": "MIT",
+  "keywords": ["video-analysis", "shot-breakdown", "transcription", "film"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "CineSleuth",
+    "shortDescription": "Break down dialogue, scenes, shots, pacing, and sound.",
+    "longDescription": "Accept a local video, preserve its source timeline, extract structured audiovisual evidence, and let the host agent author a complete shot-by-shot breakdown.",
+    "developerName": "LycheeAILab",
+    "category": "Creativity",
+    "capabilities": ["Interactive", "Write"],
+    "websiteURL": "https://lab.lycheeai.com.cn/",
+    "defaultPrompt": [
+      "对这个视频做完整拉片，输出逐句台词、物理场景、逐镜表和视听分析。",
+      "提取这个视频的全部台词和屏幕文字，保留精确时间码。",
+      "拆解这条短视频的开场钩子、内容结构、节奏、字幕和声音设计。"
+    ],
+    "brandColor": "#D4A72C"
+  }
+}
