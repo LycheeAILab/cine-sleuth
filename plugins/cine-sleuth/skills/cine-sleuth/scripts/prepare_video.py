@@ -306,6 +306,8 @@ def main() -> None:
     ffprobe = require_binary("ffprobe")
     metadata = probe_video(source, ffprobe)
     duration = metadata["duration_seconds"]
+    if duration > 300.0:
+        raise SystemExit("CineSleuth accepts videos up to 5 minutes (300 seconds).")
 
     vad_backend = "none"
     vad_warning = None
@@ -368,9 +370,9 @@ def main() -> None:
         )
 
     source_sha256 = sha256_file(source)
-    client_request_id = "cine-1.0.1-" + hashlib.sha256(f"cine-sleuth:1.0.1:evidence-v2:{source_sha256}".encode("utf-8")).hexdigest()[:48]
+    client_request_id = "cine-1.0.2-" + hashlib.sha256(f"cine-sleuth:1.0.2:evidence-v3:{source_sha256}".encode("utf-8")).hexdigest()[:48]
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "client_request_id": client_request_id,
         "source": {
             "path": str(source),

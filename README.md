@@ -10,7 +10,7 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-1.0.1-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v1.0.1)
+  [![Version](https://img.shields.io/badge/version-1.0.2-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v1.0.2)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
@@ -30,7 +30,7 @@
 | 🔊 | **声音分析** | 原始音轨 | 人声、音乐、环境声、音效、静音与声画关系 |
 | 📈 | **结构分析** | 分析目标 | 开场钩子、节奏、信息密度、情绪推进与 CTA |
 | ✨ | **镜头提示词** | 原片中的每个画面 | 逐镜生成可直接用于视频生成的中文提示词 |
-| ⏱️ | **长视频拉片** | 数分钟或更长的视频 | 本地智能切分、断点续跑、跨片段合并与完整报告 |
+| ⏱️ | **长视频拉片** | 5 分钟以内的视频 | 本地智能切分、断点续跑、跨片段合并与完整报告 |
 
 > [!TIP]
 > 你不需要理解切片、VAD、时间码换算或结构化数据。Skill 会让 Agent 自动完成这些内部步骤。
@@ -56,7 +56,7 @@
 ```
 
 ```text
-使用 CineSleuth 分析这段 10 分钟视频。自动切分并继续到完整报告，不要把技术切片当作场景。
+使用 CineSleuth 分析这段 4 分钟视频。自动切分并继续到完整报告，不要把技术切片当作场景。
 ```
 
 ## 🧠 Agent 如何完成拉片
@@ -75,7 +75,7 @@ flowchart LR
 ```
 
 - **短视频**：通常作为一个完整片段分析。
-- **长视频**：优先在自然停顿或镜头边界切分，并保留重叠上下文。
+- **较长视频**：5 分钟以内，优先在自然停顿或镜头边界切分，并保留重叠上下文。
 - **跨段台词**：利用重叠证据拼接，不凭空补写。
 - **跨段场景**：由当前 Agent 根据地点、时间、人物和声音连续性合并。
 - **最终总结**：始终由正在服务你的 Agent 完成，不把分段结果简单拼接。
@@ -106,9 +106,9 @@ codex plugin add cine-sleuth@cine-sleuth
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 1.0.1；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 1.0.2；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v1.0.1/cine-sleuth-workbuddy-1.0.1.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v1.0.2/cine-sleuth-workbuddy-1.0.2.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 

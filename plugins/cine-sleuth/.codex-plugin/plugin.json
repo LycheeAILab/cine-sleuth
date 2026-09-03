@@ -1,6 +1,6 @@
 {
   "name": "cine-sleuth",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Evidence-backed video breakdowns with directly usable generation prompts for every shot.",
   "author": {
     "name": "LycheeAILab",

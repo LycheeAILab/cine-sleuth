@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -55,6 +55,7 @@ def main() -> int:
         require("video-generation prompt" in skill.lower(), "WorkBuddy Skill omits per-shot generation prompts")
         prompt = archive.read("cine-sleuth/references/multimodal-segment-prompt.md").decode("utf-8")
         require('"video_generation_prompt"' in prompt, "Evidence schema omits per-shot generation prompts")
+        require('"media_fingerprint"' in prompt, "Evidence schema omits media visibility verification")
         provider_name = "gemi" + "ni"
         require(provider_name not in skill.lower(), "WorkBuddy Skill exposes an underlying provider name")
 
@@ -63,6 +64,8 @@ def main() -> int:
         for name in ("README.md", "INSTALL.md", "WORKBUDDY_INSTALL.md")
     )
     require(provider_name not in public_guidance.lower(), "Installation guidance exposes an underlying provider name")
+    prepare_source = (ROOT / "plugins/cine-sleuth/skills/cine-sleuth/scripts/prepare_video.py").read_text(encoding="utf-8")
+    require("duration > 300.0" in prepare_source, "Five-minute source duration limit is missing")
 
     print("Distribution OK: Codex Plugin plus self-contained WorkBuddy Skill package.")
     return 0

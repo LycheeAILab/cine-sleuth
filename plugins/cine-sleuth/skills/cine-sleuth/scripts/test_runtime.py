@@ -22,7 +22,10 @@ class FakeResponse:
         return False
 
     def read(self) -> bytes:
-        evidence = json.dumps({"shots": [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}]})
+        evidence = json.dumps({
+            "media_fingerprint": {"media_visible": True, "observed_frame_count": 2, "visual_medium": "live action", "visible_subjects": ["person"]},
+            "shots": [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}],
+        })
         payload = {"candidates": [{"content": {"parts": [{"text": evidence}]}}]}
         return json.dumps(payload).encode("utf-8")
 
@@ -66,9 +69,11 @@ def main() -> None:
     assert b'form-data; name="chunkKey"' in request.data
     assert b"chunk-001" in request.data
     assert b"Inspect this chunk" in request.data
+    assert b'form-data; name="video"' in request.data
     assert b"mock-mp4" in request.data
     assert captured["timeout"] == 12.0
-    assert result == {"shots": [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}]}
+    assert result["media_fingerprint"]["media_visible"] is True
+    assert result["shots"] == [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}]
 
     recovered = {"candidates": [{"content": {"parts": [{"text": "{\"shots\": []}"}]}}]}
     with patch.object(
@@ -89,7 +94,7 @@ def main() -> None:
         source = root / "original.mp4"
         source.write_bytes(b"untouched-original")
         manifest_path = root / "manifest.json"
-        manifest = {"client_request_id": "cine-1.0.1-test-request", "source": {"path": str(source), "sha256": "a" * 64}, "chunks": []}
+        manifest = {"client_request_id": "cine-1.0.2-test-request", "source": {"path": str(source), "sha256": "a" * 64, "duration_seconds": 42.5}, "chunks": []}
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         created = {
             "jobId": "22222222-2222-2222-2222-222222222222",
@@ -112,7 +117,8 @@ def main() -> None:
         assert api_call.call_count == 2
         upload.assert_called_once_with("https://cos.example/signed", source, "video/mp4")
         saved = json.loads(manifest_path.read_text(encoding="utf-8"))
-        assert api_call.call_args_list[0].args[4]["clientRequestId"] == "cine-1.0.1-test-request"
+        assert api_call.call_args_list[0].args[4]["clientRequestId"] == "cine-1.0.2-test-request"
+        assert api_call.call_args_list[0].args[4]["durationSeconds"] == 42.5
         assert saved["lab_task"] == {"job_id": created["jobId"], "original_upload": "ready", "status": "queued", "reused": False}
     print("CineSleuth runtime smoke test passed")
 

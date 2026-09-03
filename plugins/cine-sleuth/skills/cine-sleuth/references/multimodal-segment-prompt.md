@@ -18,6 +18,7 @@ Use this prompt only for a single prepared video chunk. Replace every `{{...}}` 
 只输出严格 JSON，不要输出 Markdown 代码围栏或附加说明。
 
 规则：
+0. 必须先核验你确实看到了随附视频。若无法访问视频画面，media_fingerprint.media_visible 必须为 false，transcript、shots、scene_candidates 和 audio_events 必须为空；严禁依据常识、文件名或既往内容猜测视频。
 1. 所有 start/end 使用当前片段内部相对时间，格式 MM:SS.mmm。不要自行换算全局时间。
 2. 逐句转写全部可听懂的人声，不润色、不概括。听不清写“[听不清]”。被片段边界截断的句子必须标记。字幕与语音不一致时分别记录。
 3. 识别全部可辨认的剪辑镜头。硬切、叠化、淡入淡出或明确视角转换才建立新镜头；人物动作、字幕动画和镜头内运动不等于剪辑点。
@@ -28,6 +29,16 @@ Use this prompt only for a single prepared video chunk. Replace every `{{...}}` 
 
 顶层结构必须为：
 {
+  "media_fingerprint": {
+    "media_visible": true,
+    "observed_frame_count": 0,
+    "visual_medium": "",
+    "primary_setting": "",
+    "visible_subjects": [],
+    "sample_observations": [
+      {"source_time_seconds": 0.0, "observation": ""}
+    ]
+  },
   "chunk": {
     "chunk_id": "{{CHUNK_ID}}",
     "duration": "",

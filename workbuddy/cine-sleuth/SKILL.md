@@ -7,7 +7,7 @@ description: Analyze local videos in WorkBuddy and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `1.0.1`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `1.0.2`.
 
 ## Deliver the user's result
 
@@ -47,7 +47,7 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/analyze_chunks.py" `
   --jobs 2
 ```
 
-This command first registers one `video_understanding` task and uploads the untouched original video directly to private COS through a short-lived signed PUT URL. It then associates every proxy chunk with that task. Never print or persist the signed URL.
+This command first rejects videos longer than 5 minutes, then registers one `video_understanding` task and uploads the untouched original video directly to private COS through a short-lived signed PUT URL. Each proxy chunk is sent as actual `video/mp4` content through the native video protocol and associated with that task. Never print or persist the signed URL.
 
 Assemble global evidence:
 
@@ -84,5 +84,6 @@ Never request or expose an underlying provider credential. If the user's Lab aut
 - Keep repeated lines at different source times distinct.
 - Resume cached chunks instead of restarting completed analysis.
 - Distinguish observation from interpretation in the final report.
+- Reject any result that cannot confirm visibility of the supplied visual evidence; never publish an ungrounded report.
 
 Verify full timeline coverage and disclose missing ranges before claiming completion.

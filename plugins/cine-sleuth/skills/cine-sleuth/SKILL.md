@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.1`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.2`.
 
 ## Deliver the requested analysis
 
@@ -46,7 +46,7 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    python scripts/analyze_chunks.py "C:/absolute/output/cine-sleuth-work/manifest.json" --jobs 2
    ```
 
-   Before chunk analysis, the script creates one `video_understanding` task and uploads the untouched original video directly to private Tencent COS storage through a short-lived signed PUT URL. The original does not pass through the Lab API process. Each proxy chunk is attached to that parent task. The configured service extracts chunk-level evidence only; it is not the final report author.
+   Before chunk analysis, the script creates one `video_understanding` task and uploads the untouched original video directly to private Tencent COS storage through a short-lived signed PUT URL. The original does not pass through the Lab API process. Each proxy chunk is sent as actual `video/mp4` content through the provider's native video protocol. The configured service extracts chunk-level evidence only; it is not the final report author.
 4. Globalize timestamps and remove obvious overlap duplicates:
 
    ```powershell
@@ -79,7 +79,7 @@ The manifest stores a deterministic client request ID, the Lab task ID, and uplo
 - Do not infer identity, equipment, focal length, location, or creative intent as fact.
 - Cache completed chunks and resume missing ranges rather than restarting the whole video.
 
-Default segmentation uses a 90-second core target, a 45-second minimum, a 120-second maximum, and 3 seconds of overlap. Prefer a speech pause, then a visual cut, then a forced maximum-duration boundary. Use neural VAD when available and the bundled local silence detector otherwise.
+Videos longer than 5 minutes are rejected before upload. Default segmentation uses a 90-second core target, a 45-second minimum, a 120-second maximum, and 3 seconds of overlap. Prefer a speech pause, then a visual cut, then a forced maximum-duration boundary. Use neural VAD when available and the bundled local silence detector otherwise.
 
 ## Verify before delivery
 
@@ -89,5 +89,6 @@ Default segmentation uses a 90-second core target, a 45-second minimum, a 120-se
 - Join boundary-cut sentences only when overlap evidence supports the join.
 - Distinguish physical scenes, edits, and rhetorical/content sections in the report.
 - Keep observations and interpretations visibly separate.
+- Reject a chunk result when it does not contain a valid media fingerprint confirming that the supplied frames were visible. Never turn an ungrounded provider response into a report.
 
 Return the report in the user's requested format. Also return `evidence.json` only when the user asks for structured data or when it materially helps continued work.

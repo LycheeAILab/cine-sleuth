@@ -20,7 +20,7 @@ def api_json(base_url: str, token: str, path: str, method: str = "GET", payload:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "User-Agent": "CineSleuth-Skill/1.0.1",
+            "User-Agent": "CineSleuth-Skill/1.0.2",
         },
         method=method,
     )
@@ -81,6 +81,7 @@ def ensure_original_uploaded(manifest_path: Path, manifest: dict, token: str, ba
             "fileName": source.name,
             "mediaType": media_type,
             "sizeBytes": source.stat().st_size,
+            "durationSeconds": manifest["source"].get("duration_seconds"),
             "checksumSha256": manifest["source"].get("sha256"),
             "clientRequestId": manifest.get("client_request_id"),
         })
