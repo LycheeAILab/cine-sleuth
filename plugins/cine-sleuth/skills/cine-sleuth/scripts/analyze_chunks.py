@@ -11,6 +11,7 @@ import random
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -76,7 +77,7 @@ def request_chunk(
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "CineSleuth-Skill/0.3",
+            "User-Agent": "CineSleuth-Skill/0.3.1",
         },
         method="POST",
     )
@@ -85,10 +86,35 @@ def request_chunk(
             body = response.read().decode("utf-8")
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 409 and "still processing" in body:
+            return wait_for_chunk(token, base_url, job_id, chunk_key, timeout)
         raise RuntimeError(f"Analysis service HTTP {exc.code}: {body[:1000]}") from exc
     if not body.strip():
         raise RuntimeError("Analysis service returned an empty HTTP response.")
     return json.loads(extract_json_text(json.loads(body)))
+
+
+def wait_for_chunk(token: str, base_url: str, job_id: str, chunk_key: str, timeout: float) -> dict:
+    deadline = time.monotonic() + timeout
+    encoded_key = urllib.parse.quote(chunk_key, safe="")
+    url = f"{base_url.rstrip('/')}/api/cine-sleuth/jobs/{job_id}/chunks/{encoded_key}"
+    while time.monotonic() < deadline:
+        request = urllib.request.Request(
+            url,
+            headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/0.3.1"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                state = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Analysis status HTTP {exc.code}: {body[:1000]}") from exc
+        if state.get("status") == "completed" and isinstance(state.get("result"), dict):
+            return state["result"]
+        if state.get("status") == "failed":
+            raise RuntimeError(f"Analysis service failed: {state.get('errorMessage') or 'unknown error'}")
+        time.sleep(3.0)
+    raise TimeoutError("Analysis is still processing on LycheeAILab; rerun the command to resume without resubmitting it.")
 
 
 def analyze_one(
@@ -123,7 +149,7 @@ def analyze_one(
                     "chunk_id": chunk["chunk_id"],
                     "source_start_seconds": chunk["source_start_seconds"],
                     "source_end_seconds": chunk["source_end_seconds"],
-                    "model": "gemini-2.5-pro",
+                    "service": "lychee-video-understanding",
                 }
             )
             temporary = output.with_suffix(".json.tmp")
@@ -146,7 +172,7 @@ def main() -> None:
     parser.add_argument("--force-login", action="store_true")
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--retries", type=int, default=2)
-    parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--timeout", type=float, default=360.0)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 

@@ -20,7 +20,7 @@ def api_json(base_url: str, token: str, path: str, method: str = "GET", payload:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "User-Agent": "CineSleuth-Skill/0.3",
+            "User-Agent": "CineSleuth-Skill/0.3.1",
         },
         method=method,
     )

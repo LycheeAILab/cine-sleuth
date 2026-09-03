@@ -54,7 +54,7 @@ def load_token() -> str | None:
 def validate_token(token: str, base_url: str = DEFAULT_BASE_URL) -> bool:
     request = urllib.request.Request(
         f"{base_url.rstrip('/')}/api/skill-auth/me",
-        headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/0.3"},
+        headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/0.3.1"},
     )
     try:
         with urllib.request.urlopen(request, timeout=20) as response:

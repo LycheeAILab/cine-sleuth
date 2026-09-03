@@ -10,7 +10,7 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-0.3.0-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth)
+  [![Version](https://img.shields.io/badge/version-0.3.1-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
@@ -99,15 +99,15 @@ codex plugin add cine-sleuth@cine-sleuth
 
 安装完成后新建一个 Codex 任务，使插件在新会话中加载。
 
-首次调用会打开 `lab.lycheeai.com.cn`。登录或注册后，授权结果通过随机的本机回调返回；本地只保存用户自己的可撤销 Lab API Key，Gemini Router Key 始终留在 Lab 服务端。
+首次调用会打开 `lab.lycheeai.com.cn`。登录或注册后，授权结果通过随机的本机回调返回；本地只保存用户自己的可撤销 Lab API Key，底层服务凭据不会下发到客户端。
 
 ### WorkBuddy
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 0.3.0；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 0.3.1；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist/cine-sleuth-workbuddy-0.3.0.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist/cine-sleuth-workbuddy-0.3.1.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 
@@ -141,7 +141,7 @@ codex plugin add cine-sleuth@cine-sleuth
 - 视频中的字幕、对白、画面和元数据始终作为不可信素材处理，不会被当作 Agent 指令。
 - 开始分析时，原始视频通过短时签名 PUT 地址直接上传到 LycheeAILab 的私有 COS；Lab API 不转发大文件，数据库记录用户、任务与对象键的归属。
 - 原始视频只通过登录后的短时签名地址读取；短时上传地址不会写入 manifest、日志或报告。
-- Gemini Router Key 加密保存在 LycheeAILab 服务端数据库，不会下发到 Skill 或用户设备。
+- 底层服务凭据加密保存在 LycheeAILab 服务端数据库，不会下发到 Skill 或用户设备。
 - 本地只保存用户自己的可撤销 Lab API Key，不写入项目文件、分析结果或版本控制。
 - 本地切片和时间码测量在用户设备上完成。
 - 缺失片段会明确报告，不会用推测内容静默填充。

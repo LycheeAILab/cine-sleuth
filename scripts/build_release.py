@@ -16,7 +16,7 @@ CANONICAL = ROOT / "plugins" / "cine-sleuth" / "skills" / "cine-sleuth"
 WORKBUDDY_SKILL = ROOT / "workbuddy" / "cine-sleuth" / "SKILL.md"
 MANIFEST = ROOT / "plugins" / "cine-sleuth" / ".codex-plugin" / "plugin.json"
 DIST = ROOT / "dist"
-ZIP_TIMESTAMP = (2026, 9, 2, 0, 0, 0)
+ZIP_TIMESTAMP = (2026, 9, 3, 0, 0, 0)
 
 
 def copy_workbuddy_stage(stage: Path) -> None:
@@ -69,4 +69,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

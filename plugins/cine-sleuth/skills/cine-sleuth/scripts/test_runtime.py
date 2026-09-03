@@ -27,6 +27,14 @@ class FakeResponse:
         return json.dumps(payload).encode("utf-8")
 
 
+class StaticResponse(FakeResponse):
+    def __init__(self, payload: dict):
+        self.payload = payload
+
+    def read(self) -> bytes:
+        return json.dumps(self.payload).encode("utf-8")
+
+
 def main() -> None:
     captured = {}
 
@@ -61,6 +69,20 @@ def main() -> None:
     assert b"mock-mp4" in request.data
     assert captured["timeout"] == 12.0
     assert result == {"shots": [{"start": 0, "end": 1}]}
+
+    recovered = {"candidates": [{"content": {"parts": [{"text": "{\"shots\": []}"}]}}]}
+    with patch.object(
+        analyze_chunks.urllib.request,
+        "urlopen",
+        return_value=StaticResponse({"status": "completed", "result": recovered}),
+    ):
+        assert analyze_chunks.wait_for_chunk(
+            "lych_live_test_user_credential",
+            "https://lab.lycheeai.com.cn",
+            "11111111-1111-1111-1111-111111111111",
+            "chunk-001",
+            1.0,
+        ) == recovered
 
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)

@@ -7,7 +7,7 @@ description: Analyze local videos in WorkBuddy and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.3.0`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `0.3.1`.
 
 ## Deliver the user's result
 
@@ -29,7 +29,7 @@ If it reports `authenticated: false`, run:
 python "${CODEBUDDY_SKILL_DIR}/scripts/lab_auth.py"
 ```
 
-This opens LycheeAILab login and returns the user's revocable Lab credential to a randomized local callback. It never returns the Gemini Router Key.
+This opens LycheeAILab login and returns the user's revocable Lab credential to a randomized local callback. Provider credentials remain entirely behind the Lab service.
 
 Prepare local evidence and proxy chunks:
 
@@ -59,7 +59,7 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/assemble_evidence.py" `
 
 Read `${CODEBUDDY_SKILL_DIR}/references/report-guide.md`. Use WorkBuddy's own reasoning to merge cross-chunk scenes and author the final report. Never make another remote call merely to summarize chunk results.
 
-Never request or expose the Gemini Router Key. It remains encrypted on the Lab server. If the user's Lab authorization expires, run `lab_auth.py --force` and resume cached chunks.
+Never request or expose an underlying provider credential. If the user's Lab authorization expires, run `lab_auth.py --force` and resume cached chunks.
 
 ## Preserve the evidence contract
 

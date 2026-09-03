@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -51,6 +51,14 @@ def main() -> int:
         require("${CODEBUDDY_SKILL_DIR}" in skill, "WorkBuddy Skill directory variable missing")
         require(archive.read("cine-sleuth/VERSION").decode("utf-8").strip() == VERSION, "VERSION mismatch")
         require("LYCHEE_API_KEY" not in skill and "LYCHEE_MODEL" not in skill, "Skill still asks for provider credentials")
+        provider_name = "gemi" + "ni"
+        require(provider_name not in skill.lower(), "WorkBuddy Skill exposes an underlying provider name")
+
+    public_guidance = "\n".join(
+        (ROOT / name).read_text(encoding="utf-8")
+        for name in ("README.md", "INSTALL.md", "WORKBUDDY_INSTALL.md")
+    )
+    require(provider_name not in public_guidance.lower(), "Installation guidance exposes an underlying provider name")
 
     print("Distribution OK: Codex Plugin plus self-contained WorkBuddy Skill package.")
     return 0

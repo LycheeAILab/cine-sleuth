@@ -4,7 +4,7 @@ This is an execution guide for WorkBuddy. When a user asks to install CineSleuth
 
 ## Safety gate
 
-- Install release `0.3.0` from `LycheeAILab/cine-sleuth`.
+- Install release `0.3.1` from `LycheeAILab/cine-sleuth`.
 - Verify the ZIP against `dist/SHA256SUMS`.
 - Back up an existing installation instead of deleting it.
 - Run only the local doctor after installation; do not upload a real video.
@@ -14,7 +14,7 @@ This is an execution guide for WorkBuddy. When a user asks to install CineSleuth
 ```powershell
 $script = Join-Path $env:TEMP "install-cine-sleuth-workbuddy.ps1"
 Invoke-WebRequest "https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/install-workbuddy.ps1" -OutFile $script
-powershell -ExecutionPolicy Bypass -File $script -Version "0.3.0"
+powershell -ExecutionPolicy Bypass -File $script -Version "0.3.1"
 ```
 
 ## macOS or Linux
@@ -22,11 +22,11 @@ powershell -ExecutionPolicy Bypass -File $script -Version "0.3.0"
 ```bash
 script="$(mktemp)"
 curl -fsSL "https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/install-workbuddy.sh" -o "$script"
-sh "$script" "0.3.0"
+sh "$script" "0.3.1"
 ```
 
 ## Verify in WorkBuddy
 
-Reload WorkBuddy or start a new conversation. Confirm `cine-sleuth` appears in installed Skills, run `scripts/lab_auth.py` to authorize through LycheeAILab, then run `scripts/doctor.py`. Setup succeeds only when doctor reports version `0.3.0`, `authenticated: true`, and `runtime_ready: true`.
+Reload WorkBuddy or start a new conversation. Confirm `cine-sleuth` appears in installed Skills, run `scripts/lab_auth.py` to authorize through LycheeAILab, then run `scripts/doctor.py`. Setup succeeds only when doctor reports version `0.3.1`, `authenticated: true`, and `runtime_ready: true`.
 
-The local installation stores only the user's revocable Lab credential. Never request or store the Gemini Router Key in project files, Skills, installation logs, or chat messages.
+The local installation stores only the user's revocable Lab credential. No underlying service credential is requested, displayed, or stored by the Skill.
