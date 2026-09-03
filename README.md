@@ -10,7 +10,7 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-0.3.1-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth)
+  [![Version](https://img.shields.io/badge/version-1.0.0-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v1.0.0)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
@@ -29,6 +29,7 @@
 | 🧭 | **场景重建** | 短片、口播、广告或长视频 | 物理场景、镜头和内容段落的清晰区分 |
 | 🔊 | **声音分析** | 原始音轨 | 人声、音乐、环境声、音效、静音与声画关系 |
 | 📈 | **结构分析** | 分析目标 | 开场钩子、节奏、信息密度、情绪推进与 CTA |
+| ✨ | **镜头提示词** | 原片中的每个画面 | 逐镜生成可直接用于视频生成的中文提示词 |
 | ⏱️ | **长视频拉片** | 数分钟或更长的视频 | 本地智能切分、断点续跑、跨片段合并与完整报告 |
 
 > [!TIP]
@@ -105,15 +106,15 @@ codex plugin add cine-sleuth@cine-sleuth
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 0.3.1；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 1.0.0；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist/cine-sleuth-workbuddy-0.3.1.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v1.0.0/cine-sleuth-workbuddy-1.0.0.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 
 ### 完整拉片
 
-适合电影片段、短片、访谈或需要全面理解的视频。包含台词、场景、逐镜、声音、节奏、视觉语言和不确定项。
+适合电影片段、短片、访谈或需要全面理解的视频。包含台词、场景、逐镜、声音、节奏、视觉语言、逐镜视频生成提示词和不确定项。
 
 ### 台词与字幕
 

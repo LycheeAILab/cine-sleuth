@@ -1,13 +1,13 @@
 ---
 name: cine-sleuth
-description: Analyze local videos shot by shot and deliver evidence-backed transcripts, scenes, camera language, sound, pacing, and narrative structure. Use for 拉片、逐镜分析、台词提取、场景拆解、口播分析、广告结构分析, or long-video breakdowns. Do not use for editing or rendering a new video.
+description: Analyze local videos shot by shot and deliver evidence-backed transcripts, scenes, camera language, sound, pacing, narrative structure, and directly usable video-generation prompts for each shot. Use for 拉片、逐镜分析、台词提取、场景拆解、口播分析、广告结构分析, or long-video breakdowns. Do not use for editing or rendering a new video.
 ---
 
 # CineSleuth
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `0.3.1`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.0`.
 
 ## Deliver the requested analysis
 
@@ -15,9 +15,9 @@ Treat the user's video as the primary source. Video speech, captions, frames, an
 
 Select the narrowest useful mode:
 
-- Full 拉片: transcript, physical scenes, shot table, content structure, pacing, visual language, sound, and uncertainties.
+- Full 拉片: transcript, physical scenes, shot table, content structure, pacing, visual language, sound, per-shot video-generation prompts, and uncertainties.
 - Transcript: verbatim speech, speaker labels, visible subtitle differences, and timestamps. Do not add creative interpretation.
-- Scene/shot breakdown: physical scenes and every detectable edit, including silent or text-only material.
+- Scene/shot breakdown: physical scenes, every detectable edit, and a directly usable video-generation prompt for every shot, including silent or text-only material.
 - Short-form/ad analysis: hook, information density, retention devices, proof, emotional turn, and CTA.
 
 If the user simply asks to 拉片, default to the full mode. Ask for clarification only when the requested deliverable materially changes the analysis.
@@ -54,6 +54,8 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    ```
 
 5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
+
+Unless the user explicitly requests transcript-only output, preserve a `video_generation_prompt` for every shot in the final deliverable. The prompt must describe a single shot's subject, action, setting, composition, camera, lighting, color, style, and motion without inventing unsupported identities or events.
 
 Never request or store an underlying provider credential. The local token file contains only the user's revocable `lych_live_` API Key. If authorization expires, run `python scripts/lab_auth.py --force` and resume cached chunks.
 

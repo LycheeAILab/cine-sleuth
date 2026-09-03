@@ -118,7 +118,7 @@ def main() -> None:
     results_dir = (args.results_dir or manifest_path.parent / "results").expanduser().resolve()
 
     assembled = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source": manifest["source"],
         "segmentation": manifest["segmentation"],
         "chunk_status": [],
@@ -180,4 +180,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.1"
+VERSION = "1.0.0"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -51,6 +51,9 @@ def main() -> int:
         require("${CODEBUDDY_SKILL_DIR}" in skill, "WorkBuddy Skill directory variable missing")
         require(archive.read("cine-sleuth/VERSION").decode("utf-8").strip() == VERSION, "VERSION mismatch")
         require("LYCHEE_API_KEY" not in skill and "LYCHEE_MODEL" not in skill, "Skill still asks for provider credentials")
+        require("video-generation prompt" in skill.lower(), "WorkBuddy Skill omits per-shot generation prompts")
+        prompt = archive.read("cine-sleuth/references/multimodal-segment-prompt.md").decode("utf-8")
+        require('"video_generation_prompt"' in prompt, "Evidence schema omits per-shot generation prompts")
         provider_name = "gemi" + "ni"
         require(provider_name not in skill.lower(), "WorkBuddy Skill exposes an underlying provider name")
 

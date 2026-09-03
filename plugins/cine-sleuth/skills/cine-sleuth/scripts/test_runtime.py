@@ -22,7 +22,7 @@ class FakeResponse:
         return False
 
     def read(self) -> bytes:
-        evidence = json.dumps({"shots": [{"start": 0, "end": 1}]})
+        evidence = json.dumps({"shots": [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}]})
         payload = {"candidates": [{"content": {"parts": [{"text": evidence}]}}]}
         return json.dumps(payload).encode("utf-8")
 
@@ -68,7 +68,7 @@ def main() -> None:
     assert b"Inspect this chunk" in request.data
     assert b"mock-mp4" in request.data
     assert captured["timeout"] == 12.0
-    assert result == {"shots": [{"start": 0, "end": 1}]}
+    assert result == {"shots": [{"start": 0, "end": 1, "video_generation_prompt": "A single verified shot"}]}
 
     recovered = {"candidates": [{"content": {"parts": [{"text": "{\"shots\": []}"}]}}]}
     with patch.object(

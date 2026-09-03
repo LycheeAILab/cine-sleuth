@@ -1,7 +1,7 @@
 {
   "name": "cine-sleuth",
-  "version": "0.3.1",
-  "description": "Evidence-backed video breakdowns for dialogue, scenes, shots, pacing, visual language, and sound.",
+  "version": "1.0.0",
+  "description": "Evidence-backed video breakdowns with directly usable generation prompts for every shot.",
   "author": {
     "name": "LycheeAILab",
     "url": "https://lab.lycheeai.com.cn/"
@@ -13,8 +13,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "CineSleuth",
-    "shortDescription": "Break down dialogue, scenes, shots, pacing, and sound.",
-    "longDescription": "Accept a local video, preserve its source timeline, extract structured audiovisual evidence, and let the host agent author a complete shot-by-shot breakdown.",
+    "shortDescription": "Break down videos and write a generation prompt for every shot.",
+    "longDescription": "Accept a local video, preserve its source timeline, extract structured audiovisual evidence, and let the host agent author a complete shot-by-shot breakdown with directly usable video-generation prompts.",
     "developerName": "LycheeAILab",
     "category": "Creativity",
     "capabilities": ["Interactive", "Write"],

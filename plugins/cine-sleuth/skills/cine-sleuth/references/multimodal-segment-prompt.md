@@ -24,6 +24,7 @@ Use this prompt only for a single prepared video chunk. Replace every `{{...}}` 
 4. 场景是相同地点、时间和叙事情境下的一组镜头。技术切片边界不等于场景边界，跨边界时使用 continues_from_previous 或 continues_into_next。
 5. 可直接看到或听到的内容写入 observed_facts；创作意图、人物关系、地点推测等写入 interpretations。身份、设备、焦段或意图无法确定时不得写成事实。
 6. 不得遗漏黑场、片头、字幕卡、空镜、无台词段落、环境声或片尾。
+7. 每个镜头都生成一条可直接用于视频生成模型的中文提示词。提示词必须忠实于可见证据，并完整描述主体、动作、环境、景别、视角、运镜、光线、色彩、风格和连续运动；不得写分析结论、时间码、模型名或无法从画面确认的身份。若镜头信息不足，应保守描述，不得臆造。
 
 顶层结构必须为：
 {
@@ -62,6 +63,7 @@ Use this prompt only for a single prepared video chunk. Replace every `{{...}}` 
       "characters_actions": "",
       "on_screen_text": [],
       "sound": "",
+      "video_generation_prompt": "",
       "observed_facts": [],
       "interpretations": [],
       "confidence": 0.0

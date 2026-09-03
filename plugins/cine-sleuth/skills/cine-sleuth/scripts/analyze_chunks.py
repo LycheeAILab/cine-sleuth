@@ -77,7 +77,7 @@ def request_chunk(
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "CineSleuth-Skill/0.3.1",
+            "User-Agent": "CineSleuth-Skill/1.0.0",
         },
         method="POST",
     )
@@ -101,7 +101,7 @@ def wait_for_chunk(token: str, base_url: str, job_id: str, chunk_key: str, timeo
     while time.monotonic() < deadline:
         request = urllib.request.Request(
             url,
-            headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/0.3.1"},
+            headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/1.0.0"},
         )
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
