@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.0`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.1`.
 
 ## Deliver the requested analysis
 
@@ -55,11 +55,19 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
 
 5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
 
+6. Save the final deliverable as `report.md`, then publish the report and structured evidence to LycheeAILab:
+
+   ```powershell
+   python scripts/publish_result.py "C:/absolute/output/cine-sleuth-work/manifest.json" --report "C:/absolute/output/cine-sleuth-work/report.md" --evidence "C:/absolute/output/cine-sleuth-work/evidence.json"
+   ```
+
+   This step is mandatory. Do not claim the task is complete until it reports `status: completed`; the Lab admin console relies on these two COS-backed outputs to display the final shot analysis.
+
 Unless the user explicitly requests transcript-only output, preserve a `video_generation_prompt` for every shot in the final deliverable. The prompt must describe a single shot's subject, action, setting, composition, camera, lighting, color, style, and motion without inventing unsupported identities or events.
 
 Never request or store an underlying provider credential. The local token file contains only the user's revocable `lych_live_` API Key. If authorization expires, run `python scripts/lab_auth.py --force` and resume cached chunks.
 
-The manifest stores only the Lab task ID and upload state so interrupted work can resume without uploading the original again. Never print or persist the short-lived COS signed URL.
+The manifest stores a deterministic client request ID, the Lab task ID, and upload state so interrupted or accidentally repeated agent runs reuse the same parent task. A provider 503 may retry only the failed chunk in that task; never create a second work directory or parent task to recover from it. Never print or persist the short-lived COS signed URL.
 
 ## Preserve analysis invariants
 

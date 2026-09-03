@@ -20,7 +20,7 @@ def api_json(base_url: str, token: str, path: str, method: str = "GET", payload:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "User-Agent": "CineSleuth-Skill/1.0.0",
+            "User-Agent": "CineSleuth-Skill/1.0.1",
         },
         method=method,
     )
@@ -82,6 +82,7 @@ def ensure_original_uploaded(manifest_path: Path, manifest: dict, token: str, ba
             "mediaType": media_type,
             "sizeBytes": source.stat().st_size,
             "checksumSha256": manifest["source"].get("sha256"),
+            "clientRequestId": manifest.get("client_request_id"),
         })
         job_id = job["jobId"]
         manifest["lab_task"] = {"job_id": job_id, "original_upload": "pending"}
@@ -93,10 +94,34 @@ def ensure_original_uploaded(manifest_path: Path, manifest: dict, token: str, ba
             raise RuntimeError("LycheeAILab did not provide a resumable original-video upload URL")
         stream_put(upload["url"], source, job["originalVideo"]["mediaType"])
         job = api_json(base_url, token, f"/api/cine-sleuth/jobs/{job_id}/upload-complete", "POST")
-    manifest["lab_task"] = {"job_id": job_id, "original_upload": "ready"}
+    manifest["lab_task"] = {"job_id": job_id, "original_upload": "ready", "status": job.get("status", "queued"), "reused": bool(job.get("reused"))}
     write_manifest(manifest_path, manifest)
     return job_id
 
 
 def complete_task(base_url: str, token: str, job_id: str) -> dict:
     return api_json(base_url, token, f"/api/cine-sleuth/jobs/{job_id}/complete", "POST")
+
+
+def result_metadata(base_url: str, token: str, job_id: str) -> dict:
+    return api_json(base_url, token, f"/api/cine-sleuth/jobs/{job_id}/result")
+
+
+def restore_result(base_url: str, token: str, job_id: str, output_dir: Path) -> list[str]:
+    result = result_metadata(base_url, token, job_id)
+    restored: list[str] = []
+    names = {"cine_sleuth_report": "report.md", "cine_sleuth_evidence": "evidence.json"}
+    for item in result.get("outputs", []):
+        name = names.get(item.get("type"))
+        target_url = item.get("url")
+        if not name or not isinstance(target_url, str):
+            continue
+        parsed = urlsplit(target_url)
+        if parsed.scheme != "https" or not parsed.hostname or not parsed.hostname.endswith(".myqcloud.com"):
+            raise RuntimeError("LycheeAILab returned an invalid COS result URL")
+        with urllib.request.urlopen(target_url, timeout=120) as response:
+            (output_dir / name).write_bytes(response.read())
+        restored.append(name)
+    if set(restored) != set(names.values()):
+        raise RuntimeError("Completed task does not contain both report.md and evidence.json")
+    return restored

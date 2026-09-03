@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 from lab_auth import DEFAULT_BASE_URL, authorized_token
-from lab_video import complete_task, ensure_original_uploaded
+from lab_video import ensure_original_uploaded, restore_result
 
 
 def render_prompt(template: str, manifest: dict, chunk: dict) -> str:
@@ -77,7 +77,7 @@ def request_chunk(
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": f"multipart/form-data; boundary={boundary}",
-            "User-Agent": "CineSleuth-Skill/1.0.0",
+            "User-Agent": "CineSleuth-Skill/1.0.1",
         },
         method="POST",
     )
@@ -101,7 +101,7 @@ def wait_for_chunk(token: str, base_url: str, job_id: str, chunk_key: str, timeo
     while time.monotonic() < deadline:
         request = urllib.request.Request(
             url,
-            headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/1.0.0"},
+            headers={"Authorization": f"Bearer {token}", "User-Agent": "CineSleuth-Skill/1.0.1"},
         )
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
@@ -182,6 +182,11 @@ def main() -> None:
     job_id = ensure_original_uploaded(manifest_path, manifest, token, args.base_url)
     results_dir = (args.results_dir or manifest_path.parent / "results").expanduser().resolve()
     results_dir.mkdir(parents=True, exist_ok=True)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if (manifest.get("lab_task") or {}).get("status") == "completed":
+        restored = restore_result(args.base_url, token, job_id, manifest_path.parent)
+        print(json.dumps({"jobId": job_id, "status": "completed", "reused": True, "restored": restored}, ensure_ascii=False))
+        return
     prompt_path = args.prompt or Path(__file__).resolve().parent.parent / "references" / "multimodal-segment-prompt.md"
     prompt_template = extract_prompt(prompt_path.read_text(encoding="utf-8"))
 
@@ -219,8 +224,7 @@ def main() -> None:
     print(json.dumps(summary, ensure_ascii=False))
     if failures:
         raise SystemExit(1)
-    completion = complete_task(args.base_url, token, job_id)
-    print(json.dumps(completion, ensure_ascii=False))
+    print(json.dumps({"jobId": job_id, "status": "analysis_complete", "next": "assemble evidence, write report, then publish_result.py"}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

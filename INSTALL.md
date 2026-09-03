@@ -30,7 +30,7 @@ Do not modify unrelated marketplaces, plugins, or Skills.
 
 ## Verify locally
 
-Confirm `cine-sleuth@cine-sleuth` is installed and enabled at version `1.0.0`. Run the installed Skill's `scripts/lab_auth.py`; it opens the official LycheeAILab login and stores only the user's revocable Lab API Key. Then run `scripts/doctor.py`; it performs no media upload and must return `"version": "1.0.0"`, `"authenticated": true`, and `"runtime_ready": true`.
+Confirm `cine-sleuth@cine-sleuth` is installed and enabled at version `1.0.1`. Run the installed Skill's `scripts/lab_auth.py`; it opens the official LycheeAILab login and stores only the user's revocable Lab API Key. Then run `scripts/doctor.py`; it performs no media upload and must return `"version": "1.0.1"`, `"authenticated": true`, and `"runtime_ready": true`.
 
 Do not upload a real video merely to test setup. Never request or expose an underlying provider credential.
 
@@ -39,7 +39,7 @@ Do not upload a real video merely to test setup. Never request or expose an unde
 New plugin Skills are available in a new Codex task. Create and open one with:
 
 ```text
-CineSleuth 1.0.0 已安装、完成 LycheeAILab 授权并通过 doctor 验证。请使用 $cine-sleuth 分析我接下来提供的视频：默认输出逐句台词、物理场景、逐镜表、内容结构、视听分析，以及每个镜头可直接使用的视频生成提示词；所有结论保留时间码，听不清或看不清的内容必须标记，不要猜测。长视频使用本地语音与镜头边界切分，并由当前 Agent 自己完成跨片段总结。
+CineSleuth 1.0.1 已安装、完成 LycheeAILab 授权并通过 doctor 验证。请使用 $cine-sleuth 分析我接下来提供的视频：默认输出逐句台词、物理场景、逐镜表、内容结构、视听分析，以及每个镜头可直接使用的视频生成提示词；所有结论保留时间码，听不清或看不清的内容必须标记，不要猜测。长视频使用本地语音与镜头边界切分，并由当前 Agent 自己完成跨片段总结。
 ```
 
 Installation is complete only after the plugin is verified and the new task is created.

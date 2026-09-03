@@ -89,15 +89,18 @@ def main() -> None:
         source = root / "original.mp4"
         source.write_bytes(b"untouched-original")
         manifest_path = root / "manifest.json"
-        manifest = {"source": {"path": str(source), "sha256": "a" * 64}, "chunks": []}
+        manifest = {"client_request_id": "cine-1.0.1-test-request", "source": {"path": str(source), "sha256": "a" * 64}, "chunks": []}
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         created = {
             "jobId": "22222222-2222-2222-2222-222222222222",
+            "status": "queued",
+            "reused": False,
             "originalVideo": {"status": "pending", "mediaType": "video/mp4"},
             "upload": {"method": "PUT", "url": "https://cos.example/signed"},
         }
         ready = {
             "jobId": created["jobId"],
+            "status": "queued",
             "originalVideo": {"status": "ready", "mediaType": "video/mp4"},
             "upload": None,
         }
@@ -109,7 +112,8 @@ def main() -> None:
         assert api_call.call_count == 2
         upload.assert_called_once_with("https://cos.example/signed", source, "video/mp4")
         saved = json.loads(manifest_path.read_text(encoding="utf-8"))
-        assert saved["lab_task"] == {"job_id": created["jobId"], "original_upload": "ready"}
+        assert api_call.call_args_list[0].args[4]["clientRequestId"] == "cine-1.0.1-test-request"
+        assert saved["lab_task"] == {"job_id": created["jobId"], "original_upload": "ready", "status": "queued", "reused": False}
     print("CineSleuth runtime smoke test passed")
 
 

@@ -367,11 +367,14 @@ def main() -> None:
             }
         )
 
+    source_sha256 = sha256_file(source)
+    client_request_id = "cine-1.0.1-" + hashlib.sha256(f"cine-sleuth:1.0.1:evidence-v2:{source_sha256}".encode("utf-8")).hexdigest()[:48]
     manifest = {
         "schema_version": 1,
+        "client_request_id": client_request_id,
         "source": {
             "path": str(source),
-            "sha256": sha256_file(source),
+            "sha256": source_sha256,
             **metadata,
         },
         "segmentation": {
@@ -393,4 +396,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
