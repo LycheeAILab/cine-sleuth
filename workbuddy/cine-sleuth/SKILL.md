@@ -7,7 +7,7 @@ description: Analyze local videos in WorkBuddy and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `1.0.2`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `1.0.3`.
 
 ## Deliver the user's result
 
@@ -59,7 +59,7 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/assemble_evidence.py" `
 
 Read `${CODEBUDDY_SKILL_DIR}/references/report-guide.md`. Use WorkBuddy's own reasoning to merge cross-chunk scenes and author the final report. Never make another remote call merely to summarize chunk results.
 
-Save the final deliverable as `report.md`, then publish both final files:
+Save the final deliverable as `report.md` and deliver it locally. Lab archives model results independently; a completed Lab task does not replace WorkBuddy's final report. Only if the user chooses to archive the final report and evidence, run:
 
 ```powershell
 python "${CODEBUDDY_SKILL_DIR}/scripts/publish_result.py" `
@@ -68,7 +68,7 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/publish_result.py" `
   --evidence "C:/absolute/output/cine-sleuth-work/evidence.json"
 ```
 
-Publishing is mandatory and must return `status: completed`; it makes the final report visible in LycheeAILab management. The manifest's deterministic client request ID prevents an agent retry from creating a second parent task. Retry a 503 only inside the failed chunk of the existing task.
+Publishing is optional and requires the user's consent. Declining it never blocks local delivery or the completed Lab analysis task. Lab displays model results separately from optionally archived customer reports. The manifest's deterministic client request ID prevents an agent retry from creating a second parent task. Retry a 503 only inside the failed chunk of the existing task.
 
 For every reported shot, preserve the generated prompt and keep it faithful to visible evidence. Each prompt should describe a single shot's subject, action, setting, composition, camera, lighting, color, style, and motion without inventing unsupported identities or events.
 

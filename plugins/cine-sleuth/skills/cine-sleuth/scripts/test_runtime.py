@@ -94,7 +94,7 @@ def main() -> None:
         source = root / "original.mp4"
         source.write_bytes(b"untouched-original")
         manifest_path = root / "manifest.json"
-        manifest = {"client_request_id": "cine-1.0.2-test-request", "source": {"path": str(source), "sha256": "a" * 64, "duration_seconds": 42.5}, "chunks": []}
+        manifest = {"client_request_id": "cine-1.0.2-test-request", "source": {"path": str(source), "sha256": "a" * 64, "duration_seconds": 42.5}, "chunks": [{"chunk_id": "chunk-001"}]}
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         created = {
             "jobId": "22222222-2222-2222-2222-222222222222",
@@ -119,7 +119,17 @@ def main() -> None:
         saved = json.loads(manifest_path.read_text(encoding="utf-8"))
         assert api_call.call_args_list[0].args[4]["clientRequestId"] == "cine-1.0.2-test-request"
         assert api_call.call_args_list[0].args[4]["durationSeconds"] == 42.5
+        assert api_call.call_args_list[0].args[4]["chunkCount"] == 1
         assert saved["lab_task"] == {"job_id": created["jobId"], "original_upload": "ready", "status": "queued", "reused": False}
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        manifest_path = root / "manifest.json"
+        manifest_path.write_text(json.dumps({"lab_task": {"status": "completed"}, "chunks": [{"chunk_id": "chunk-001"}]}), encoding="utf-8")
+        with patch("sys.argv", ["analyze_chunks.py", str(manifest_path)]), patch.object(analyze_chunks, "authorized_token", return_value="test"), patch.object(analyze_chunks, "ensure_original_uploaded", return_value="existing-job"), patch.object(analyze_chunks, "analyze_one", return_value={"status": "cached"}) as recover, patch.object(analyze_chunks, "complete_task", return_value={"status": "completed"}) as finish:
+            analyze_chunks.main()
+            recover.assert_called_once()
+            finish.assert_called_once()
+        assert not (root / "report.md").exists(), "Model completion must not fabricate a customer report"
     print("CineSleuth runtime smoke test passed")
 
 

@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.2`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.3`.
 
 ## Deliver the requested analysis
 
@@ -55,13 +55,13 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
 
 5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
 
-6. Save the final deliverable as `report.md`, then publish the report and structured evidence to LycheeAILab:
+6. Save the final deliverable as `report.md` and deliver it locally. Lab independently archives the model analysis and marks its task completed; this does not replace steps 4–5 or the user's final report. Only if the user chooses to archive the Agent-authored report and structured evidence, run:
 
    ```powershell
    python scripts/publish_result.py "C:/absolute/output/cine-sleuth-work/manifest.json" --report "C:/absolute/output/cine-sleuth-work/report.md" --evidence "C:/absolute/output/cine-sleuth-work/evidence.json"
    ```
 
-   This step is mandatory. Do not claim the task is complete until it reports `status: completed`; the Lab admin console relies on these two COS-backed outputs to display the final shot analysis.
+   This step is optional. Declining report archival must not block local delivery or change the completed Lab analysis task. The admin console displays server-side model results separately from an optionally archived customer report. Never upload Agent-authored report/evidence without the user's consent.
 
 Unless the user explicitly requests transcript-only output, preserve a `video_generation_prompt` for every shot in the final deliverable. The prompt must describe a single shot's subject, action, setting, composition, camera, lighting, color, style, and motion without inventing unsupported identities or events.
 

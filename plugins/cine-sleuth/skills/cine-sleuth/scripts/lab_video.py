@@ -20,7 +20,7 @@ def api_json(base_url: str, token: str, path: str, method: str = "GET", payload:
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "User-Agent": "CineSleuth-Skill/1.0.2",
+            "User-Agent": "CineSleuth-Skill/1.0.3",
         },
         method=method,
     )
@@ -84,6 +84,7 @@ def ensure_original_uploaded(manifest_path: Path, manifest: dict, token: str, ba
             "durationSeconds": manifest["source"].get("duration_seconds"),
             "checksumSha256": manifest["source"].get("sha256"),
             "clientRequestId": manifest.get("client_request_id"),
+            "chunkCount": len(manifest["chunks"]),
         })
         job_id = job["jobId"]
         manifest["lab_task"] = {"job_id": job_id, "original_upload": "pending"}

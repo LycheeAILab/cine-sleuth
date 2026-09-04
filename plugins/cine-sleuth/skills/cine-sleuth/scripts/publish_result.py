@@ -51,7 +51,7 @@ def main() -> None:
     request = urllib.request.Request(
         f"{args.base_url.rstrip('/')}/api/cine-sleuth/jobs/{job_id}/result",
         data=bytes(body),
-        headers={"Authorization": f"Bearer {token}", "Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "CineSleuth-Skill/1.0.2"},
+        headers={"Authorization": f"Bearer {token}", "Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "CineSleuth-Skill/1.0.3"},
         method="POST",
     )
     try:
