@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -44,6 +44,7 @@ def main() -> int:
             "cine-sleuth/scripts/publish_result.py",
             "cine-sleuth/references/multimodal-segment-prompt.md",
             "cine-sleuth/references/report-guide.md",
+            "cine-sleuth/references/cloud-processing.md",
         }
         require(required <= names, f"WorkBuddy archive missing: {sorted(required - names)}")
         require(not any("agents/" in name for name in names), "WorkBuddy archive contains Codex metadata")

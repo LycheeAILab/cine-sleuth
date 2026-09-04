@@ -7,7 +7,7 @@ description: Analyze local videos shot by shot and deliver evidence-backed trans
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.3`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `1.0.4`.
 
 ## Deliver the requested analysis
 
@@ -22,7 +22,19 @@ Select the narrowest useful mode:
 
 If the user simply asks to 拉片, default to the full mode. Ask for clarification only when the requested deliverable materially changes the analysis.
 
-## Run the internal workflow
+## Explain cloud use briefly
+
+Before the first cloud analysis of a video, use one concise confirmation in the user's language:
+
+> 将使用 LycheeAILab 云端能力进行拉片分析，视频会上传至云端处理。请确认你拥有该片源的使用授权，并同意继续。
+
+If the user has already received this disclosure and agreed for this video, continue without asking again for each chunk or retry. Login alone is not consent to upload a video. If the user declines cloud processing, do not upload or start the cloud analysis; explain briefly that this workflow requires cloud processing. Do not imply it runs entirely locally.
+
+Use ordinary progress wording such as “正在使用云端能力分析视频”. Do not repeatedly narrate storage vendors, buckets, signed URLs, or internal archival steps. Answer questions about data handling accurately; see [references/cloud-processing.md](references/cloud-processing.md) for details. This wording does not bypass host-required permissions.
+
+Deliver the final Agent report locally by default. Do not interrupt delivery with an unsolicited archival confirmation. Upload that report only if the user requests or accepts optional archival; model results are saved by Lab as part of the disclosed cloud analysis.
+
+## Execute the workflow
 
 Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute paths for user inputs and outputs.
 
@@ -46,7 +58,7 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    python scripts/analyze_chunks.py "C:/absolute/output/cine-sleuth-work/manifest.json" --jobs 2
    ```
 
-   Before chunk analysis, the script creates one `video_understanding` task and uploads the untouched original video directly to private Tencent COS storage through a short-lived signed PUT URL. The original does not pass through the Lab API process. Each proxy chunk is sent as actual `video/mp4` content through the provider's native video protocol. The configured service extracts chunk-level evidence only; it is not the final report author.
+   After cloud-use consent, the script creates one `video_understanding` task and sends the original video for cloud processing. Each proxy chunk is sent as actual `video/mp4` content through the native video protocol. The service extracts chunk-level evidence only; it is not the final report author. Transport and storage details are in [references/cloud-processing.md](references/cloud-processing.md).
 4. Globalize timestamps and remove obvious overlap duplicates:
 
    ```powershell
