@@ -1,6 +1,6 @@
 {
   "name": "cine-sleuth",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Evidence-backed video breakdowns with directly usable generation prompts for every shot.",
   "author": {
     "name": "LycheeAILab",
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "CineSleuth",
     "shortDescription": "Break down videos and write a generation prompt for every shot.",
-    "longDescription": "Accept a local video, preserve its source timeline, extract structured audiovisual evidence, and let the host agent author a complete shot-by-shot breakdown with directly usable video-generation prompts.",
+    "longDescription": "Accept a local video or authorized Douyin link, preserve its source timeline, extract audiovisual evidence, and let the host agent deliver a complete illustrated breakdown with an original first frame and video-generation prompt for each segment.",
     "developerName": "LycheeAILab",
     "category": "Creativity",
     "capabilities": ["Interactive", "Write"],

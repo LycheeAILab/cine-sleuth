@@ -1,0 +1,17 @@
+name: Skill validation
+on: [push, pull_request]
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python -m pip install -r plugins/cine-sleuth/skills/cine-sleuth/requirements.txt
+      - run: python -m compileall -q plugins/cine-sleuth/skills/cine-sleuth/scripts
+      - run: python plugins/cine-sleuth/skills/cine-sleuth/scripts/test_runtime.py
+      - run: python plugins/cine-sleuth/skills/cine-sleuth/scripts/test_visual_delivery.py -v
+      - run: python scripts/build_release.py && python scripts/test_distribution.py
+      - run: python scripts/test_clean_install.py

@@ -6,7 +6,7 @@ This is an execution guide for Codex agents. When a user asks to install or upgr
 
 Installation must run in the Codex desktop app on the user's local machine. In a web or isolated cloud conversation, ask the user to open Codex desktop and paste:
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.0.0/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
 
 ## Install or upgrade
 
@@ -30,7 +30,7 @@ Do not modify unrelated marketplaces, plugins, or Skills.
 
 ## Verify locally
 
-Confirm `cine-sleuth@cine-sleuth` is installed and enabled at version `1.0.4`. Run the installed Skill's `scripts/lab_auth.py`; it opens the official LycheeAILab login and stores only the user's revocable Lab API Key. Then run `scripts/doctor.py`; it performs no media upload and must return `"version": "1.0.4"`, `"authenticated": true`, and `"runtime_ready": true`.
+Confirm `cine-sleuth@cine-sleuth` is installed and enabled at version `2.0.0`. Install Python dependencies with `python -m pip install -r "<installed-skill-directory>/requirements.txt"` in the host's Python environment; FFmpeg/ffprobe must be on PATH. Run `scripts/lab_auth.py`; it opens official LycheeAILab login and stores only the user's revocable Lab API Key. Then run `scripts/doctor.py`; it uploads no media and must return `"version": "2.0.0"`, `"authenticated": true`, and `"runtime_ready": true`. No download or analysis is required during installation.
 
 Do not upload a real video merely to test setup. Never request or expose an underlying provider credential.
 
@@ -39,7 +39,7 @@ Do not upload a real video merely to test setup. Never request or expose an unde
 New plugin Skills are available in a new Codex task. Create and open one with:
 
 ```text
-CineSleuth 1.0.4 已安装、完成 LycheeAILab 授权并通过 doctor 验证。请使用 $cine-sleuth 分析我接下来提供的视频：默认输出逐句台词、物理场景、逐镜表、内容结构、视听分析，以及每个镜头可直接使用的视频生成提示词；所有结论保留时间码，听不清或看不清的内容必须标记，不要猜测。长视频使用本地语音与镜头边界切分，并由当前 Agent 自己完成跨片段总结。
+CineSleuth 2.0.0 已安装、完成 LycheeAILab 授权并通过 doctor 验证。请使用 $cine-sleuth 分析我接下来提供的视频：默认输出逐句台词、物理场景、逐镜表、内容结构、视听分析，以及每个镜头可直接使用的视频生成提示词；所有结论保留时间码，听不清或看不清的内容必须标记，不要猜测。长视频使用本地语音与镜头边界切分，并由当前 Agent 自己完成跨片段总结。
 ```
 
 Installation is complete only after the plugin is verified and the new task is created.

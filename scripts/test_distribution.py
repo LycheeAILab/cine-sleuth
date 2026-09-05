@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0.4"
+VERSION = "2.0.0"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -42,6 +42,14 @@ def main() -> int:
             "cine-sleuth/scripts/lab_video.py",
             "cine-sleuth/scripts/assemble_evidence.py",
             "cine-sleuth/scripts/publish_result.py",
+            "cine-sleuth/scripts/prepare_video_source.py",
+            "cine-sleuth/scripts/build_visual_report.py",
+            "cine-sleuth/scripts/douk_downloader/download.py",
+            "cine-sleuth/scripts/douk_downloader/a_bogus.py",
+            "cine-sleuth/scripts/douk_downloader/LICENSE",
+            "cine-sleuth/scripts/douk_downloader/NOTICE.md",
+            "cine-sleuth/requirements.txt",
+            "cine-sleuth/references/visual-delivery.md",
             "cine-sleuth/references/multimodal-segment-prompt.md",
             "cine-sleuth/references/report-guide.md",
             "cine-sleuth/references/cloud-processing.md",
@@ -54,6 +62,13 @@ def main() -> int:
         require(archive.read("cine-sleuth/VERSION").decode("utf-8").strip() == VERSION, "VERSION mismatch")
         require("LYCHEE_API_KEY" not in skill and "LYCHEE_MODEL" not in skill, "Skill still asks for provider credentials")
         require("video-generation prompt" in skill.lower(), "WorkBuddy Skill omits per-shot generation prompts")
+        require("build_visual_report.py" in skill and "prepare_video_source.py" in skill,
+                "WorkBuddy instructions omit 2.0 workflow steps")
+        for name in names:
+            if name.endswith("/") or name == "cine-sleuth/SKILL.md":
+                continue
+            canonical = ROOT / "plugins/cine-sleuth/skills" / name
+            require(canonical.read_bytes() == archive.read(name), f"Canonical/WorkBuddy drift: {name}")
         prompt = archive.read("cine-sleuth/references/multimodal-segment-prompt.md").decode("utf-8")
         require('"video_generation_prompt"' in prompt, "Evidence schema omits per-shot generation prompts")
         require('"media_fingerprint"' in prompt, "Evidence schema omits media visibility verification")

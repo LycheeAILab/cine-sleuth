@@ -1,15 +1,24 @@
 ---
 name: cine-sleuth
-description: Analyze local videos in WorkBuddy and deliver evidence-backed transcripts, scenes, shots, pacing, visual language, sound, and directly usable video-generation prompts for each shot. Use for 拉片、逐镜分析、台词提取、场景拆解、口播分析, or long-video breakdowns.
+description: Analyze local videos or authorized Douyin links in WorkBuddy and deliver illustrated reports with each segment's first frame, evidence-backed transcripts, scenes, shots, pacing, sound, and video-generation prompts. Use for 拉片、逐镜分析、台词提取、场景拆解、口播分析, or video-link breakdowns.
 ---
 
 # CineSleuth for WorkBuddy
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `1.0.4`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.0.0`.
 
 ## Deliver the user's result
+
+For link input and every illustrated final report, first read
+`${CODEBUDDY_SKILL_DIR}/references/visual-delivery.md`. Run its commands using
+`${CODEBUDDY_SKILL_DIR}/scripts/` paths. Resolve authorized Douyin links with
+`prepare_video_source.py`; local input is unchanged. After WorkBuddy authors the
+report, run `build_visual_report.py` with `segments.json` and `report-draft.md`.
+Deliver self-contained `report.html` and the illustrated Markdown package, with
+the original first frame for every final visual segment. Raw model output and
+Lab completion remain unchanged. Transcript-only output may remain text.
 
 The user should only need to provide a video and describe the desired analysis. Choose full 拉片 by default, or narrow the output to transcript, scene/shot breakdown, or short-form/ad analysis when requested. Unless the user explicitly requests transcript-only output, include one directly usable video-generation prompt for every shot.
 
@@ -67,12 +76,12 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/assemble_evidence.py" `
 
 Read `${CODEBUDDY_SKILL_DIR}/references/report-guide.md`. Use WorkBuddy's own reasoning to merge cross-chunk scenes and author the final report. Never make another remote call merely to summarize chunk results.
 
-Save the final deliverable as `report.md` and deliver it locally. Lab archives model results independently; a completed Lab task does not replace WorkBuddy's final report. Only if the user chooses to archive the final report and evidence, run:
+Build and inspect the illustrated final delivery using `references/visual-delivery.md`; transcript-only output can remain text. Lab archives model results independently; a completed Lab task does not replace WorkBuddy's final report. Only if the user chooses archival, publish `delivery/report-text.md` (or the transcript-only report) and evidence:
 
 ```powershell
 python "${CODEBUDDY_SKILL_DIR}/scripts/publish_result.py" `
   "C:/absolute/output/cine-sleuth-work/manifest.json" `
-  --report "C:/absolute/output/cine-sleuth-work/report.md" `
+  --report "C:/absolute/output/cine-sleuth-work/delivery/report-text.md" `
   --evidence "C:/absolute/output/cine-sleuth-work/evidence.json"
 ```
 

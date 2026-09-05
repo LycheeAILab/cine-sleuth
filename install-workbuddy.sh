@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-version="${1:-1.0.4}"
-raw_root="https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist"
+version="${1:-2.0.0}"
+raw_root="https://github.com/LycheeAILab/cine-sleuth/releases/download/v${version}"
 archive_name="cine-sleuth-workbuddy-${version}.zip"
 temp_root="$(mktemp -d)"
 skills_root="${HOME}/.workbuddy/skills"
@@ -29,5 +29,6 @@ if [ -e "${target}" ]; then
   echo "Previous installation moved to ${backup}"
 fi
 mv "${source_dir}" "${target}"
+python3 -m pip install -r "${target}/requirements.txt"
 python3 "${target}/scripts/doctor.py"
 echo "CineSleuth ${version} is installed for WorkBuddy at ${target}"

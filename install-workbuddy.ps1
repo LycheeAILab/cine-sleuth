@@ -1,7 +1,7 @@
-param([string]$Version = "1.0.4")
+param([string]$Version = "2.0.0")
 
 $ErrorActionPreference = "Stop"
-$rawRoot = "https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/main/dist"
+$rawRoot = "https://github.com/LycheeAILab/cine-sleuth/releases/download/v$Version"
 $archiveName = "cine-sleuth-workbuddy-$Version.zip"
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cine-sleuth-install-" + [guid]::NewGuid().ToString("N"))
 $archive = Join-Path $tempRoot $archiveName
@@ -33,6 +33,8 @@ Move-Item -LiteralPath $source -Destination $target
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) { throw "Python 3.9 or newer is required by the Skill runtime" }
+& $python.Source -m pip install -r (Join-Path $target "requirements.txt")
+if ($LASTEXITCODE -ne 0) { throw "CineSleuth dependency installation failed" }
 & $python.Source (Join-Path $target "scripts\doctor.py")
 if ($LASTEXITCODE -ne 0) { throw "CineSleuth doctor failed" }
 Write-Host "CineSleuth $Version is installed for WorkBuddy at $target"
