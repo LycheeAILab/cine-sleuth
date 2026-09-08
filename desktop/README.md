@@ -2,9 +2,9 @@
 
 ## 下一版本：2.0.1（本地待发布）
 
-- 模型设置内置 DeepSeek V4 Flash、DeepSeek V3.2、Kimi K2.6、GLM 5.1，无需 Key 即可浏览与选择；实际总结仍需用户硅基流动 Key。
+- 模型设置按用户指定内置 GLM 5.3、DeepSeek V4 Flash、DeepSeek V4 Pro、Kimi K2.6、MiniMax M2.5，无需 Key 即可浏览与选择；实际总结仍需用户硅基流动 Key。
 - 保留自定义模型 ID、旧模型配置；保存 Key 后可主动同步更多模型，同步不覆盖当前选择。不因选择模型自动生成或收费。
-- 目录按 2026-09-08 [硅基流动公告](https://docs.siliconflow.cn/docs/release-notes/overview)、[GLM 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/stream-mode) 与 [Kimi 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/vision) 核对。目录不承诺具体账户权限；禁止加入已宣布即将下线的模型，发版前复核。
+- 目录按 2026-09-08 [官方模型中心](https://siliconflow.cn/models)、[硅基流动公告](https://docs.siliconflow.cn/docs/release-notes/overview) 与 [Kimi 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/vision) 核对。目录不承诺具体账户权限；MiniMax M2.5 按用户指定保留，但选择后明确显示平台计划于 2026-09-11 下线，发版前必须复核，不静默替换。
 - 桌面登录入口使用蓝色主按钮；配套 Lab `0.4.6-dev` 为桌面浏览器登录/注册/短信/授权页增加独立 CSS Module。不修改 Skill 授权页或官网通用登录样式。
 - 本地安装包 `release/CineSleuth-2.0.1-Windows-x64-Setup.exe`；当前正式 COS 更新源仍为 2.0.0，本地构建不等于已上线。
 

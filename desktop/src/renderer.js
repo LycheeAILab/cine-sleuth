@@ -55,6 +55,7 @@ function selectModel(id){
  const known=Array.from($('model-preset').options).some(option=>option.value===id&&id!=='custom');
  $('model-preset').value=known?id:'custom';$('model-id').value=id;
  $('custom-model').classList.toggle('hidden',known);
+ $('model-help').textContent=presetModels.find(model=>model.id===id)?.notice||'常用模型无需 Key 即可选择，实际可用性以你的供应商账户为准。';
  for(const card of $('model-cards').children)card.setAttribute('aria-pressed',String(card.dataset.model===id));
 }
 function renderModelChoices(id=presetModels[0].id){
