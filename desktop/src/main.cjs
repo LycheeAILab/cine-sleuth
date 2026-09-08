@@ -5,14 +5,15 @@ const os = require('node:os');
 const {pathToFileURL} = require('node:url');
 const {LabClient} = require('./lab-client.cjs');
 const {SCHEME,labOrigin,beginLogin,acceptCallback} = require('./auth.cjs');
+const {ModelSettings}=require('./model-settings.cjs');
 const {AnalysisPipeline} = require('./pipeline.cjs');
 const base=labOrigin(process.env.CINESLEUTH_LAB_URL,app.isPackaged);
 const page=pathToFileURL(path.join(__dirname,'index.html')).href;
-let win,client,engine,pending,user,authenticating=false,selectedVideo=null;
+let win,client,engine,models,pending,user,authenticating=false,selectedVideo=null;
 const notify=payload=>{if(win&&!win.isDestroyed())win.webContents.send('cine:event',payload);};
 async function handleCallback(value) {
   try {
-    if(!client||engine?.running||authenticating)throw Error('请先结束当前操作，再重新登录');
+    if(!client||engine?.running||models?.busy||authenticating)throw Error('请先结束当前操作，再重新登录');
     const input=acceptCallback(value,pending);pending=null;authenticating=true;
     await client.exchange(input);user=(await client.api('/api/desktop-auth/me')).user;
     selectedVideo=null;notify({type:'auth',user});
@@ -29,6 +30,7 @@ else {
   app.on('open-url',(event,url)=>{event.preventDefault();void handleCallback(url);});
   app.whenReady().then(async()=>{
     const root=app.getPath('userData');await fs.mkdir(root,{recursive:true});
+    models=new ModelSettings(path.join(root,'model-settings'),safeStorage);
     const tokenFile=path.join(root,'desktop-session.enc');
     const storage={
       async read(){try{
@@ -49,7 +51,7 @@ else {
     if(app.isPackaged)app.setAsDefaultProtocolClient(SCHEME);
     else app.setAsDefaultProtocolClient(SCHEME,process.execPath,[path.resolve(__dirname,'..')]);
     async function currentUser(){user=(await client.api('/api/desktop-auth/me')).user;return user;}
-    function idle(){if(engine.running||authenticating)throw Error('请先暂停当前任务，再操作登录');}
+    function idle(){if(engine.running||authenticating||models.busy)throw Error('请先暂停当前任务，再操作登录');}
     function handle(name,fn){ipcMain.handle('cine:'+name,async(event,...args)=>{
       if(event.sender!==win.webContents||event.senderFrame?.url!==page)throw Error('请求来源无效');
       try{return {ok:true,value:await fn(...args)};}catch(error){return {ok:false,message:error.message};}
@@ -84,6 +86,14 @@ else {
     });
     async function results(id){await currentUser();if(!/^[a-f0-9-]{36}$/.test(id))throw Error('任务编号无效');return client.api(`/api/cine-sleuth/jobs/${id}/model-results`);}
     handle('results',results);
+    handle('modelStatus',async()=>models.status((await currentUser()).id));
+    handle('modelSave',async(input)=>models.save((await currentUser()).id,input));
+    handle('modelClear',async()=>models.clear((await currentUser()).id));
+    handle('modelList',async()=>models.models((await currentUser()).id));
+    async function summaryFile(id){await results(id);return path.join(root,'summaries',String(user.id),id+'.json');}
+    handle('summaryRead',async(id)=>{const file=await summaryFile(id);try{return JSON.parse(await fs.readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}});
+    handle('summarize',async(id)=>{const data=await results(id),owner=user.id;const value=await models.summarize(owner,data);const file=path.join(root,'summaries',String(owner),id+'.json');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file+'.tmp',JSON.stringify(value));await fs.rename(file+'.tmp',file);return value;});
+    handle('summaryExport',async(id)=>{const value=JSON.parse(await fs.readFile(await summaryFile(id),'utf8'));const choice=await dialog.showSaveDialog(win,{title:'导出总结',defaultPath:`CineSleuth-${id}.md`,filters:[{name:'Markdown',extensions:['md']}]});if(choice.canceled)return '已取消导出';await fs.writeFile(choice.filePath,value.text);return '总结已导出';});
     handle('export',async(id)=>{
       const value=await results(id);
       const choice=await dialog.showSaveDialog(win,{title:'导出模型原始结果',defaultPath:`CineSleuth-${id}.json`,filters:[{name:'JSON 模型结果',extensions:['json']}]});
@@ -97,6 +107,7 @@ else {
     win.webContents.session.setPermissionRequestHandler((_,__,callback)=>callback(false));
     let closing=false;
     win.on('close',event=>{
+      if(models.busy&&!closing){event.preventDefault();notify({type:'error',message:'正在生成总结，请等待完成后退出'});return;}
       if(!engine.running||closing)return;
       event.preventDefault();
       void dialog.showMessageBox(win,{type:'question',message:'任务正在处理中',detail:'退出将暂停本地流程。已提交到 Lab 的模型分析可能继续完成，可稍后恢复。',buttons:['继续处理','暂停并退出'],defaultId:0,cancelId:0})

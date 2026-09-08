@@ -1,7 +1,7 @@
 {
   "name": "cine-sleuth-desktop",
   "productName": "CineSleuth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "镜探 · LycheeAILab 视频模型分析客户端",
   "author": "LycheeAILab",
   "license": "MIT",
@@ -19,17 +19,61 @@
   },
   "build": {
     "appId": "cn.com.lycheeai.cinesleuth",
-    "directories": { "output": "release" },
-    "files": ["src/**/*", "package.json"],
-    "extraResources": [
-      { "from": "runtime", "to": "runtime" },
-      { "from": "../plugins/cine-sleuth/skills/cine-sleuth/references/multimodal-segment-prompt.md", "to": "segment-prompt.md" },
-      { "from": "../plugins/cine-sleuth/skills/cine-sleuth/scripts", "to": "source/scripts", "filter": ["**/*.py", "**/*LICENSE*", "**/*NOTICE*", "!**/__pycache__/**"] },
-      { "from": "../THIRD_PARTY_NOTICES.md", "to": "THIRD_PARTY_NOTICES.md" },
-      { "from": "../LICENSE", "to": "LICENSE" }
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
     ],
-    "protocols": [{ "name": "CineSleuth Login", "schemes": ["cn.com.lycheeai.cinesleuth"] }],
-    "win": { "target": "nsis", "artifactName": "CineSleuth-${version}-Windows-${arch}-Setup.${ext}", "icon": "build/icon.ico", "signExecutable": false },
-    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "deleteAppDataOnUninstall": false }
+    "extraResources": [
+      {
+        "from": "runtime",
+        "to": "runtime"
+      },
+      {
+        "from": "../plugins/cine-sleuth/skills/cine-sleuth/references/multimodal-segment-prompt.md",
+        "to": "segment-prompt.md"
+      },
+      {
+        "from": "../plugins/cine-sleuth/skills/cine-sleuth/scripts",
+        "to": "source/scripts",
+        "filter": [
+          "**/*.py",
+          "**/*LICENSE*",
+          "**/*NOTICE*",
+          "!**/__pycache__/**"
+        ]
+      },
+      {
+        "from": "../THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "../LICENSE",
+        "to": "LICENSE"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "CineSleuth Login",
+        "schemes": [
+          "cn.com.lycheeai.cinesleuth"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "CineSleuth-${version}-Windows-${arch}-Setup.${ext}",
+      "icon": "build/icon.ico",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "deleteAppDataOnUninstall": false
+    }
   }
 }
