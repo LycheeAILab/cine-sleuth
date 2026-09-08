@@ -1,0 +1,35 @@
+{
+  "name": "cine-sleuth-desktop",
+  "productName": "CineSleuth",
+  "version": "0.1.0",
+  "description": "镜探 · LycheeAILab 视频模型分析客户端",
+  "author": "LycheeAILab",
+  "license": "MIT",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "dist": "electron-builder --win nsis --x64",
+    "pack": "electron-builder --win --dir --x64",
+    "runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-runtime.ps1"
+  },
+  "devDependencies": {
+    "electron": "44.2.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "cn.com.lycheeai.cinesleuth",
+    "directories": { "output": "release" },
+    "files": ["src/**/*", "package.json"],
+    "extraResources": [
+      { "from": "runtime", "to": "runtime" },
+      { "from": "../plugins/cine-sleuth/skills/cine-sleuth/references/multimodal-segment-prompt.md", "to": "segment-prompt.md" },
+      { "from": "../plugins/cine-sleuth/skills/cine-sleuth/scripts", "to": "source/scripts", "filter": ["**/*.py", "**/*LICENSE*", "**/*NOTICE*", "!**/__pycache__/**"] },
+      { "from": "../THIRD_PARTY_NOTICES.md", "to": "THIRD_PARTY_NOTICES.md" },
+      { "from": "../LICENSE", "to": "LICENSE" }
+    ],
+    "protocols": [{ "name": "CineSleuth Login", "schemes": ["cn.com.lycheeai.cinesleuth"] }],
+    "win": { "target": "nsis", "artifactName": "CineSleuth-${version}-Windows-${arch}-Setup.${ext}", "icon": "build/icon.ico", "signExecutable": false },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "deleteAppDataOnUninstall": false }
+  }
+}

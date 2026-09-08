@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>镜探 · CineSleuth</title><link rel="stylesheet" href="style.css"></head>
+<body><aside><div class="brand"><span class="brand-mark">◫</span><div>镜探<strong>CineSleuth</strong></div></div>
+<div class="edition">DESKTOP / 01</div><nav><button id="nav-import" class="nav active">＋ 新建分析</button><button id="nav-history" class="nav">◷ 分析历史</button></nav>
+<div class="sidebar-bottom"><span class="dot"></span> LycheeAILab 云端分析<p>每一帧，都有迹可循。</p><small>Windows · Preview 0.1.0</small></div></aside>
+<main><header><span class="breadcrumb">工作空间 <b>/</b> <span id="location">新建分析</span></span><div class="account"><span id="account-name">尚未登录</span><button id="login">登录 LycheeAILab ↗</button><button id="devices" class="hidden">设备管理</button><button id="logout" class="hidden">退出</button></div></header>
+<div id="notice" role="status" class="notice hidden"></div>
+<section id="import-view"><div class="eyebrow">VIDEO INTELLIGENCE</div><h1>从一段视频，<span>看见更多。</span></h1><p class="subtitle">导入视频，交给 Lab 解析画面、声音与镜头细节。</p>
+<div class="workspace"><div class="import-panel"><div class="tabs" role="tablist"><button id="tab-local" role="tab" aria-selected="true" class="active">本地视频</button><button id="tab-link" role="tab" aria-selected="false">分享链接</button></div>
+<div id="local-input" class="source-box"><div class="film-icon">▤</div><h2 id="file-name">选择一段视频</h2><p id="file-meta">MP4、MOV、WEBM、MKV · 最长 5 分钟</p><button id="select" class="secondary">浏览本地文件</button></div>
+<div id="link-input" class="source-box hidden"><div class="film-icon">↗</div><h2>粘贴视频分享链接</h2><textarea id="url" rows="3" placeholder="粘贴抖音链接或整段分享文字" aria-label="视频分享链接"></textarea><p>支持抖音分享链接。平台限制时可改用本地视频。</p></div>
+<label class="consent"><input type="checkbox" id="consent"><span>我有权使用此视频，同意将原视频上传至 Lab 保存并进行云端模型分析。</span></label>
+<button id="start" class="primary" disabled>开始模型分析 <span>→</span></button>
+</div><div class="process-panel"><div class="panel-label">分析流程 <span>LAB WORKFLOW</span></div><ol><li><b>01</b><div><strong>准备素材</strong><p>取片、探测时长，按内容边界准备分析片段</p></div></li><li><b>02</b><div><strong>上传至 Lab</strong><p>原视频和任务保存在你的 Lab 账户</p></div></li><li><b>03</b><div><strong>模型逐段分析</strong><p>提取对白、场景、镜头及视听证据</p></div></li><li><b>04</b><div><strong>查看模型结果</strong><p>随时回看，支持导出原始 JSON</p></div></li></ol><div class="scope">当前版本提供云端模型分析结果。Agent 最终报告整理将后续接入。</div></div></div>
+<div class="section-heading"><h2>本机任务</h2><span>进度保留，可稍后继续</span></div><div id="tasks" class="task-list"><div class="empty">还没有任务，先导入一段视频。</div></div></section>
+<section id="history-view" class="hidden"><div class="eyebrow">YOUR LIBRARY</div><h1>分析历史</h1><p class="subtitle">当前 Lab 账号的 CineSleuth 任务，跨设备可查看。</p><button id="refresh-history" class="secondary">刷新历史</button><div id="history" class="task-list"></div><button id="more" class="secondary hidden">加载更多</button></section>
+<section id="result-view" class="hidden"><button id="back" class="text-button">← 返回</button><div class="result-heading"><div><div class="eyebrow">MODEL EVIDENCE</div><h1>模型分析结果</h1></div><button id="export" class="secondary">导出 JSON ↓</button></div><p class="subtitle">以下是云端模型的原始分段证据，技术片段可能存在重叠。</p><div id="result"></div></section>
+</main><script src="renderer.js"></script></body></html>
