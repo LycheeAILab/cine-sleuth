@@ -56,7 +56,7 @@ let reportBusy=false;
 function renderReport(value){
   $('open-report').classList.toggle('hidden',!value);$('export-report').classList.toggle('hidden',!value);
   $('generate-report').classList.toggle('hidden',!!value);
-  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'生成报告将整理完整镜头，并提取每个镜头的原片首帧。';
+  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'报告按镜头分批生成并保存，中断后再次生成可继续已保存的进度。';
 }
 $('generate-report').onclick=()=>perform(async()=>{
   const id=resultId;reportBusy=true;$('generate-report').disabled=true;$('summarize').disabled=true;notice('');

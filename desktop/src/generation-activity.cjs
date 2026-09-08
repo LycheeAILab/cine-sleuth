@@ -25,7 +25,7 @@ class GenerationActivity {
     const onProgress = data => {
       if (signal.aborted) return;
       Object.assign(this.value, data);
-      const message = phases[data.phase];
+      const message = (data.batchLabel ? data.batchLabel+' · ' : '') + phases[data.phase];
       if (message !== this.value.message) stage(message); else this.emit();
     };
     try {

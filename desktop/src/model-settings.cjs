@@ -25,13 +25,10 @@ class ModelSettings {
   async visualReport(user,evidence,options){
     if(this.busy)throw Error('已有报告正在生成');this.busy=true;
     try{
-      const {REPORT_PROMPT,validateReport}=require('./visual-report.cjs');
       const config=await this.read(user);if(!config.model)throw Error('请先在模型设置中选择并保存模型');
-      const source=JSON.stringify(evidence);if(Buffer.byteLength(source)>180000)throw Error('证据过长，暂不支持自动图文报告；不会截断证据');
-      const result=await this.call(config,'chat/completions',{model:config.model,messages:[{role:'system',content:REPORT_PROMPT},{role:'user',content:source}],stream:true,max_tokens:16384},options);
-      const choice=result.choices?.[0];if(choice?.finish_reason==='length')throw Error('报告达到模型输出限制，未保存不完整报告；不会自动重试');
-      if(typeof choice?.message?.content!=='string')throw Error('模型未返回报告正文');
-      return {report:validateReport(choice.message.content,evidence),model:config.model,createdAt:new Date().toISOString()};
+      const {batchedReport}=require('./report-batches.cjs');
+      return await batchedReport(evidence,config,(selected,body,progress)=>this.call(selected,'chat/completions',body,progress),options);
+
     }finally{this.busy=false;}
   }
   async summarize(user,data,options){

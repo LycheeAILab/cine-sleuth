@@ -125,7 +125,11 @@ class VisualReports {
       try { draft = JSON.parse(await fs.readFile(path.join(dir, 'draft.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
       if (!draft || draft.fingerprint !== fingerprint) {
         stage('正在使用所选模型整理逐镜图文报告…');
-        const generated = await this.models.visualReport(owner, evidence, options);
+        const checkpoint={
+          read:async()=>{try{return JSON.parse(await fs.readFile(path.join(dir,'batches.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}},
+          write:value=>saveJson(path.join(dir,'batches.json'),value),
+        };
+        const generated = await this.models.visualReport(owner, evidence, {...options,checkpoint});
         draft = {...generated, fingerprint};
         await saveJson(path.join(dir, 'draft.json'), draft);
       } else stage('复用已保存的完整报告，不再请求模型');
