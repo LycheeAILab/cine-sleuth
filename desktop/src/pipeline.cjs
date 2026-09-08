@@ -33,6 +33,7 @@ function renderPrompt(markdown,manifest,chunk) {
 }
 function prepareMedia(worker,request,runtime,signal) {
   return new Promise((resolve,reject)=>{
+    if(signal.aborted)return reject(Error('已暂停，本地进度已保留'));
     const child=spawn(worker,[],{windowsHide:true,env:{...process.env,PATH:runtime+path.delimiter+process.env.PATH,PYTHONUTF8:'1',PYTHONIOENCODING:'utf-8'},stdio:['pipe','pipe','pipe']});
     let output='',error='',timedOut=false;
     const stop=()=>{if(child.pid)spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'}).on('error',()=>child.kill());};

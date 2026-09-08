@@ -9,3 +9,7 @@ reporting code remains MIT-licensed.
 Optional/runtime Python dependencies retain their upstream licenses:
 requests (Apache-2.0), yt-dlp (Unlicense for the Python source distribution), and
 Python-Markdown (BSD-3-Clause). No browser cookies or profiles are accessed.
+
+The Windows desktop distribution additionally bundles Node.js (MIT and bundled
+third-party notices) and yt-dlp-ejs (its upstream license) for YouTube JavaScript
+processing. Their license files are included in `runtime/licenses/`.

@@ -1,4 +1,4 @@
-# 镜探 Windows 桌面端 · 2.0.3
+# 镜探 Windows 桌面端 · 2.0.4
 
 ## 2.0.3 · 记录管理与失败恢复
 
@@ -26,17 +26,17 @@
 
 ## 当前已发布版本
 
-本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.3`，与 Skill `v2.0.0` 独立。
+本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.4`，与 Skill `v2.0.0` 独立。
 
-本阶段实现：Lab 浏览器授权 → 本地视频或抖音链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史。支持 JSON 导出、用户硅基流动 Key 手动总结/Markdown，以及图文报告/首帧/离线 HTML 导出。桌面使用所选模型代替宿主 Agent 整理报告，最终报告仅在本机保存，不自动云端归档。
+本阶段实现：Lab 浏览器授权 → 本地视频或抖音/Bilibili/YouTube 链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史。支持 JSON 导出、用户硅基流动 Key 手动总结/Markdown，以及图文报告/首帧/离线 HTML 导出。桌面使用所选模型代替宿主 Agent 整理报告，最终报告仅在本机保存，不自动云端归档。
 
 桌面端使用独立设备凭据，不读取或更改 Skill 的个人 API Key。视频分析访问正式 Lab，Lab 的模型服务商密钥保留在后端。用户可另外配置自己的硅基流动 Key，由桌面主进程直接调用固定硅基流动接口，仅用于手动总结。
 
 ## 使用
 
-1. 运行 [Windows x64 2.0.3 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.3-Windows-x64-Setup.exe) 安装。
+1. 运行 [Windows x64 2.0.4 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.4-Windows-x64-Setup.exe) 安装。
 2. 点击“登录 LycheeAILab”，在系统浏览器登录并授权，返回桌面端。
-3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音分享链接。确认云端上传后开始分析。
+3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音、Bilibili、YouTube 单条视频链接。确认片源授权及云端分析后开始。
 4. 查看本机进度及模型结果。失败或重启后点击“继续”，已完成的云端片段会跳过。暂停本地流程不会取消已经提交到 Lab 的模型请求。
 5. “分析历史”读取当前 Lab 账号的 CineSleuth 任务；“导出 JSON”保存原始模型结果。
 
@@ -60,6 +60,17 @@ Electron 的 Node 下载器在某些网络中不可用时，可运行 `scripts/i
 开发启动：`npm start`。本地 Lab 联调可在未打包开发模式设置 `CINESLEUTH_LAB_URL=http://127.0.0.1:3000`，对应后端设置相同的 `LAB_PUBLIC_ORIGIN`。打包版本拒绝将 API 地址改为其他域名或本地地址。
 
 界面验证脚本 `tests/ui-smoke.cjs` 使用 Playwright，可通过 `CINE_PLAYWRIGHT` 指向已有安装。脚本采用模拟接口，不能替代真实 Lab 联调。
+
+## 2.0.4：流式生成动态
+
+- 总结和 HTML 图文报告使用硅基流动 SSE 流式响应，不再设置 180 秒的总生成截止；使用原生 HTTPS，避免隐含的 Fetch 响应头截止。
+- 生成动态显示真实步骤、计时、正文字符数及模型推理活动；不展示或保存供应商的原始推理文本，不模拟进度百分比。超过 60 秒没有新数据时提示仍在等待，不强制失败。
+- 可停止当前请求或本机首帧处理，既有文件保留；停止不能保证供应商不计费。断线、限流和供应商超时仍可能失败，不自动重发付费请求。
+- 切换视图或刷新窗口后继续显示主进程中的活动；退出进程无法恢复原模型连接。完整模型草稿先保存，首帧/HTML 阶段重试复用草稿。
+- 生成期间禁止切换账号、覆盖模型配置、启动第二个生成或重启更新。旧总结不会被半成品覆盖。
+- 仅更改桌面端，Lab 后端和 Skill 版本不变。桌面安装包与 COS 更新源独立发布。
+
+新增测试：`node --test tests/stream-completion.test.cjs tests/generation-activity.test.cjs`；`CINE_LONG_WAIT=1` 运行 `tests/native-streaming.cjs` 可执行真实 Electron 185 秒延迟响应回归，无供应商调用。
 
 ## Lab 配套变更
 

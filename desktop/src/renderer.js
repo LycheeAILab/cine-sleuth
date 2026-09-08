@@ -1,12 +1,13 @@
 const $=id=>document.getElementById(id);
 const api=window.cine;
 let state={tasks:[],user:null},mode='local',selected=false,view='import',previousView='import',resultId=null,nextCursor=null,loading=false,resultComplete=false;
+let generationActivity=null;
 function notice(text){$('notice').textContent=text||'';$('notice').classList.toggle('hidden',!text);}
 async function perform(fn){try{return await fn();}catch(error){notice(error.message);}}
 function element(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function switchView(value){view=value;closeUpdates();for(const item of ['import','history','result','settings'])$(item+'-view').classList.toggle('hidden',item!==value);$('location').textContent=value==='import'?'新建分析':value==='history'?'分析历史':value==='settings'?'模型设置':'模型结果';$('nav-settings').classList.toggle('active',value==='settings');$('nav-import').classList.toggle('active',value==='import');$('nav-history').classList.toggle('active',value==='history');}
-function setBusy(){const blocked=Boolean(state.running)||loading;$('start').disabled=blocked||!state.user||!$('consent').checked||(mode==='local'?!selected:!$('url').value.trim());$('login').disabled=blocked;$('logout').disabled=blocked;}
-async function refresh(){state=await api.state();$('account-name').textContent=state.user?.displayName||'尚未登录';$('login').classList.toggle('hidden',!!state.user);$('logout').classList.toggle('hidden',!state.user);$('devices').classList.toggle('hidden',!state.user);if(state.authError)notice(state.authError);renderTasks();setBusy();}
+function setBusy(){const generating=generationActivity?.status==='running'||reportBusy;const blocked=Boolean(state.running)||loading||generating;$('start').disabled=blocked||!state.user||!$('consent').checked||(mode==='local'?!selected:!$('url').value.trim());$('login').disabled=blocked;$('logout').disabled=blocked;$('summarize').disabled=!resultComplete||blocked;$('generate-report').disabled=!resultComplete||blocked;$('save-settings').disabled=blocked;$('clear-settings').disabled=blocked;}
+async function refresh(){state=await api.state();$('account-name').textContent=state.user?.displayName||'尚未登录';$('login').classList.toggle('hidden',!!state.user);$('logout').classList.toggle('hidden',!state.user);$('devices').classList.toggle('hidden',!state.user);if(state.authError)notice(state.authError);if(api.generationState)renderGeneration(await api.generationState());renderTasks();setBusy();}
 const statusNames={preparing:'准备中',uploading:'上传中',analyzing:'分析中',queued:'等待分析',processing:'处理中',completed:'已完成',failed:'失败',paused:'已暂停'};
 function taskRow(task,local){
   const row=element('article',undefined,'task-row'),pill=element('span',statusNames[task.status]||task.status,'pill '+task.status),info=element('div',undefined,'task-info');
@@ -33,6 +34,7 @@ async function showResult(id){const data=await api.results(id);resultId=id;resul
     else for(const [key,content] of Object.entries(value)){const detail=element('details'),summary=element('summary',labels[key]||key);detail.open=['media_fingerprint','transcript','shots'].includes(key);detail.append(summary,element('pre',typeof content==='string'?content:JSON.stringify(content,null,2)));card.append(detail);}
     $('result').append(card);
   }
+  setBusy();
 }
 $('login').onclick=()=>perform(async()=>notice(await api.login()));
 $('logout').onclick=()=>perform(async()=>{await api.logout();notice('已退出当前设备');$('history').replaceChildren();$('result').replaceChildren();switchView('import');selected=false;$('file-name').textContent='选择一段视频';await refresh();});
@@ -44,7 +46,7 @@ $('start').onclick=()=>perform(async()=>{loading=true;setBusy();notice('');try{a
 $('nav-import').onclick=()=>switchView('import');$('nav-history').onclick=()=>perform(async()=>{switchView('history');await history();});
 $('refresh-history').onclick=()=>perform(()=>history());$('more').onclick=()=>perform(()=>history(true));$('back').onclick=()=>switchView(previousView);
 $('export').onclick=()=>perform(async()=>notice(await api.export(resultId)));
-api.onEvent(event=>{if(event.type==='report-progress'){if(event.id===resultId)$('report-status').textContent=event.message;}else if(event.type==='update')renderUpdate(event.state);else if(event.type==='error')notice(event.message);else if(event.type==='auth'){notice('已登录 LycheeAILab');void perform(()=>refresh());}else if(event.type==='task'){
+api.onEvent(event=>{if(event.type==='generation-activity')renderGeneration(event.activity);else if(event.type==='report-progress'){if(event.id===resultId)$('report-status').textContent=event.message;}else if(event.type==='update')renderUpdate(event.state);else if(event.type==='error')notice(event.message);else if(event.type==='auth'){notice('已登录 LycheeAILab');void perform(()=>refresh());}else if(event.type==='task'){
   state.running=event.task.id;const index=state.tasks.findIndex(task=>task.id===event.task.id);if(index>=0)state.tasks[index]=event.task;else state.tasks.unshift(event.task);renderTasks();setBusy();
 }else if(event.type==='idle')void perform(()=>refresh());});
 void perform(()=>refresh());
@@ -60,7 +62,7 @@ $('generate-report').onclick=()=>perform(async()=>{
   const id=resultId;reportBusy=true;$('generate-report').disabled=true;$('summarize').disabled=true;notice('');
   try{const value=await api.reportGenerate(id);if(resultId===id){renderReport(value);if(!value)$('report-status').textContent='已取消选择原片，没有发起报告生成';}if(value)notice('图文报告已生成，可打开或导出离线 HTML');}
   catch(error){if(resultId===id)$('report-status').textContent=error.message;throw error;}
-  finally{reportBusy=false;$('generate-report').disabled=!resultComplete;$('summarize').disabled=!resultComplete;}
+  finally{reportBusy=false;setBusy();}
 });
 $('open-report').onclick=()=>perform(async()=>notice(await api.reportOpen(resultId)));
 $('export-report').onclick=()=>perform(async()=>notice(await api.reportExport(resultId)));
@@ -88,8 +90,32 @@ $('nav-settings').onclick=()=>perform(async()=>{switchView('settings');extraMode
 $('save-settings').onclick=()=>perform(async()=>{if(!state.user)throw Error('请先登录 Lab 再保存模型设置');settingsStatus(await api.modelSave({key:$('model-key').value,model:selectedModel()}));notice('模型设置已保存');});
 $('load-models').onclick=()=>perform(async()=>{const button=$('load-models');button.disabled=true;try{const items=await api.modelList();const current=selectedModel();extraModels=[...new Set(items)];renderModelChoices(current);notice(`已同步 ${items.length} 个模型，当前选择已保留。`);}finally{button.disabled=false;}});
 $('clear-settings').onclick=()=>perform(async()=>{await api.modelClear();settingsStatus({});notice('模型配置已删除');});
-$('summarize').onclick=()=>perform(async()=>{const id=resultId;$('summarize').disabled=true;$('summarize').textContent='正在生成总结…';try{const value=await api.summarize(id);if(resultId===id)renderSummary(value);notice('总结已生成并保存在本机');}finally{$('summarize').disabled=false;$('summarize').textContent='生成总结';}});
+$('summarize').onclick=()=>perform(async()=>{const id=resultId;reportBusy=true;setBusy();notice('');try{const value=await api.summarize(id);if(resultId===id)renderSummary(value);notice('总结已生成并保存在本机');}finally{reportBusy=false;setBusy();}});
 $('export-summary').onclick=()=>perform(async()=>notice(await api.summaryExport(resultId)));
+
+function duration(ms){const seconds=Math.max(0,Math.floor(ms/1000));return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;}
+function tickGeneration(){
+  const item=generationActivity;if(!item)return;
+  $('generation-elapsed').textContent=`用时 ${duration((item.finishedAt||Date.now())-item.startedAt)}`;
+  const silent=Math.max(0,Math.floor((Date.now()-item.lastActivityAt)/1000));
+  $('generation-wait').textContent=item.status!=='running'?'':silent>=60?`已 ${silent} 秒没有新数据，仍在等待；可继续等待或停止。`:'不设固定生成时长 · 可随时停止';
+}
+function renderGeneration(value){
+  generationActivity=value;const panel=$('generation-activity');panel.classList.toggle('hidden',!value);if(!value){setBusy();return;}
+  panel.dataset.status=value.status;
+  $('generation-title').textContent=(value.kind==='summary'?'内容总结':'图文拉片报告')+(value.model?` · ${value.model}`:'');
+  $('generation-message').textContent=value.cancelling&&value.status==='running'?'正在停止，已保存的文件会保留…':value.message;
+  const list=$('generation-steps'),nearBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-20;
+  list.replaceChildren(...value.steps.map(step=>{const li=element('li');li.append(element('time',duration(step.at-value.startedAt)),element('span',step.message));return li;}));
+  if(nearBottom)list.scrollTop=list.scrollHeight;
+  $('generation-counts').textContent=`已接收正文 ${(value.outputChars||0).toLocaleString()} 字符`+(value.reasoningChars?` · 检测到模型推理输出`:'');
+  $('generation-stop').classList.toggle('hidden',value.status!=='running');$('generation-stop').disabled=!!value.cancelling;
+  $('generation-dismiss').classList.toggle('hidden',value.status==='running');
+  tickGeneration();setBusy();
+}
+$('generation-stop').onclick=()=>perform(()=>api.generationCancel(generationActivity.operationId));
+$('generation-dismiss').onclick=()=>{$('generation-activity').classList.add('hidden');};
+setInterval(tickGeneration,1000);
 
 function renderUpdate(value){
   $('app-version').textContent='镜探 '+value.currentVersion;

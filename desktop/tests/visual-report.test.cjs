@@ -48,9 +48,27 @@ test('BYOK report generation validates output, avoids local path leakage and doe
  try{
   const {manifest,data,report}=fixture();manifest.source.path='C:/private/video.mov';let count=0;
   const vault={isEncryptionAvailable:()=>true,encryptString:s=>Buffer.from(s),decryptString:b=>b.toString()};
-  const models=new ModelSettings(root,vault,async(_,options)=>{count++;assert.ok(!options.body.includes('private/video'));return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(report)},finish_reason:'stop'}]})};});
+  const models=new ModelSettings(root,vault,undefined,async(_,body)=>{count++;assert.ok(!JSON.stringify(body).includes('private/video'));assert.equal(body.stream,true);return {choices:[{message:{content:JSON.stringify(report)},finish_reason:'stop'}]};});
   await models.save('owner',{key:'test-key',model:'test-model'});
   assert.equal((await models.visualReport('owner',assemble(data,manifest))).report.segments.length,2);assert.equal(count,1);
-  models.request=async()=>({ok:false,status:503});await assert.rejects(models.visualReport('owner',assemble(data,manifest)),/503/);assert.equal(models.busy,false);
+  models.stream=async()=>{throw Error('503');};await assert.rejects(models.visualReport('owner',assemble(data,manifest)),/503/);assert.equal(models.busy,false);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('cancelling frame processing preserves the model draft and existing final report',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'cine-report-cancel-'));
+ try{
+  const {manifest,data,report}=fixture(),video=path.join(root,'source.mp4');await fs.writeFile(video,'fixture');
+  manifest.source.path=video;manifest.source.sha256=await hashFile(video);
+  await saveJson(path.join(root,'tasks','owner',id,'manifest.json'),manifest);
+  const engine={root:path.join(root,'tasks'),tasks:async()=>[{id,userId:'owner',jobId:id}]};
+  let calls=0,cancel=false;const controller=new AbortController();
+  const reports=new VisualReports({root:path.join(root,'reports'),engine,runtime:root,notify:()=>{},chooseVideo:async()=>video,
+   models:{visualReport:async()=>{calls++;return {report:validateReport(JSON.stringify(report),assemble(data,manifest)),model:'test'};}},
+   prepare:async(_,request,__,signal)=>{if(cancel){assert.equal(signal,controller.signal);controller.abort();signal.throwIfAborted();}await fs.mkdir(request.outputDir);await fs.writeFile(path.join(request.outputDir,'report.html'),'kept');}
+  });
+  const original=await reports.generate('owner',id,data);cancel=true;
+  await assert.rejects(reports.generate('owner',id,data,{signal:controller.signal}),{name:'AbortError'});
+  assert.equal((await reports.read('owner',id)).buildId,original.buildId);assert.equal(calls,1);assert.equal(reports.busy,false);
+  cancel=false;await reports.generate('owner',id,data);assert.equal(calls,1);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });

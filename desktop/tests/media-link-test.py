@@ -8,6 +8,7 @@ import tempfile
 from unittest.mock import patch
 
 worker_file = Path(__file__).resolve().parents[1] / "scripts/media-worker.py"
+sys.path.insert(0, str(worker_file.parent))
 spec = importlib.util.spec_from_file_location("desktop_media_worker", worker_file)
 worker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(worker)

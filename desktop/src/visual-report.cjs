@@ -105,10 +105,11 @@ class VisualReports {
     return path.join(dir, saved.buildId, 'report.html');
   }
   async file(owner, id) { const saved = await this.read(owner, id); if (!saved) throw Error('请先生成图文报告'); return this.htmlPath(this.directory(owner, id), saved); }
-  async generate(owner, id, data) {
+  async generate(owner, id, data, options = {}) {
     if (this.busy || this.models.busy || this.engine.running) throw Error('请等待当前分析或报告完成');
     this.busy = true;
-    const stage = message => this.notify({type: 'report-progress', id, message});
+    const signal = options.signal || new AbortController().signal;
+    const stage = message => { signal.throwIfAborted(); options.stage?.(message); this.notify({type: 'report-progress', id, message}); };
     try {
       const dir = this.directory(owner, id), tasks = await this.engine.tasks(owner), task = tasks.find(t => t.jobId === id && t.userId === owner);
       if (!task) throw Error('本机缺少此历史任务的原片时间清单，请在分析该视频的原设备生成图文报告；JSON 仍可导出');
@@ -124,10 +125,10 @@ class VisualReports {
       try { draft = JSON.parse(await fs.readFile(path.join(dir, 'draft.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
       if (!draft || draft.fingerprint !== fingerprint) {
         stage('正在使用所选模型整理逐镜图文报告…');
-        const generated = await this.models.visualReport(owner, evidence);
+        const generated = await this.models.visualReport(owner, evidence, options);
         draft = {...generated, fingerprint};
         await saveJson(path.join(dir, 'draft.json'), draft);
-      }
+      } else stage('复用已保存的完整报告，不再请求模型');
       // Persist text before extracting frames: a media failure must not repeat a paid request.
       const buildId = randomUUID(), inputs = path.join(dir, 'inputs-' + buildId), output = path.join(dir, buildId);
       await fs.mkdir(inputs);
@@ -135,8 +136,9 @@ class VisualReports {
       await saveJson(segmentsFile, {source_sha256: manifest.source.sha256, segments: draft.report.segments});
       await fs.writeFile(markdownFile, reportMarkdown(draft.report, evidence));
       stage('正在提取各镜头首帧并生成离线 HTML…');
-      await this.prepare(path.join(this.runtime, 'cine-media', 'cine-media.exe'), {action: 'visual-report', video, segments: segmentsFile, report: markdownFile, outputDir: output}, this.runtime, new AbortController().signal);
+      await this.prepare(path.join(this.runtime, 'cine-media', 'cine-media.exe'), {action: 'visual-report', video, segments: segmentsFile, report: markdownFile, outputDir: output}, this.runtime, signal);
       await fs.access(path.join(output, 'report.html'));
+      stage('正在保存完整 HTML 报告');
       const saved = {buildId, title: draft.report.title, segments: draft.report.segments.length, model: draft.model, createdAt: draft.createdAt};
       await saveJson(path.join(dir, 'current.json'), saved);
       return saved;

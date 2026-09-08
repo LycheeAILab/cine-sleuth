@@ -11,13 +11,15 @@ const {ModelSettings}=require('./model-settings.cjs');
 const {VisualReports}=require('./visual-report.cjs');
 const {AnalysisPipeline} = require('./pipeline.cjs');
 const {HiddenRecords} = require('./hidden-records.cjs');
+const {GenerationActivity}=require('./generation-activity.cjs');
 const base=labOrigin(process.env.CINESLEUTH_LAB_URL,app.isPackaged);
 const page=pathToFileURL(path.join(__dirname,'index.html')).href;
 let win,client,engine,models,reports,pending,user,authenticating=false,recordBusy=false,selectedVideo=null;
 const notify=payload=>{if(win&&!win.isDestroyed())win.webContents.send('cine:event',payload);};
+const generation=new GenerationActivity(notify);
 async function handleCallback(value) {
   try {
-    if(!client||engine?.running||models?.busy||reports?.busy||authenticating||recordBusy)throw Error('请先结束当前操作，再重新登录');
+    if(!client||engine?.running||models?.busy||reports?.busy||generation.busy||authenticating||recordBusy)throw Error('请先结束当前操作，再重新登录');
     const input=acceptCallback(value,pending);pending=null;authenticating=true;
     await client.exchange(input);user=(await client.api('/api/desktop-auth/me')).user;
     selectedVideo=null;notify({type:'auth',user});
@@ -60,12 +62,12 @@ else {
     if(app.isPackaged)app.setAsDefaultProtocolClient(SCHEME);
     else app.setAsDefaultProtocolClient(SCHEME,process.execPath,[path.resolve(__dirname,'..')]);
     async function currentUser(){user=(await client.api('/api/desktop-auth/me')).user;return user;}
-    function idle(){if(engine.running||authenticating||models.busy||reports.busy||recordBusy)throw Error('请先完成或暂停当前操作');}
+    function idle(){if(engine.running||authenticating||models.busy||reports.busy||generation.busy||recordBusy)throw Error('请先完成或暂停当前操作');}
     function handle(name,fn){ipcMain.handle('cine:'+name,async(event,...args)=>{
       if(event.sender!==win.webContents||event.senderFrame?.url!==page)throw Error('请求来源无效');
       try{return {ok:true,value:await fn(...args)};}catch(error){return {ok:false,message:error.message};}
     });}
-    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||reports.busy||authenticating||recordBusy});
+    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||reports.busy||generation.busy||authenticating||recordBusy});
     updates.on('state',state=>notify({type:'update',state}));
     handle('updateState',()=>updates.state);
     handle('updateCheck',()=>updates.check());
@@ -87,7 +89,7 @@ else {
     });
     handle('start',async(input)=>{
       idle();
-      if(!input||input.consent!==true)throw Error('请确认片源授权及云端上传');
+      if(!input||input.consent!==true)throw Error('请确认片源授权及云端分析');
       if(input.mode==='local'&&!selectedVideo)throw Error('请先选择视频');
       if(!['local','link'].includes(input.mode))throw Error('导入方式无效');
       const source=input.mode==='local'?{video:selectedVideo}:{url:String(input.url||'').trim()};
@@ -121,16 +123,31 @@ else {
     async function results(id){await currentUser();if(!/^[a-f0-9-]{36}$/.test(id))throw Error('任务编号无效');return client.api(`/api/cine-sleuth/jobs/${id}/model-results`);}
     handle('results',results);
     handle('reportRead',async(id)=>{await results(id);return reports.read(user.id,id);});
-    handle('reportGenerate',async(id)=>{const data=await results(id);return reports.generate(user.id,id,data);});
+    function generate(id,kind,work){
+      idle();const owner=user?.id;
+      return generation.run(owner,id,kind,async options=>{
+        const data=await results(id);options.signal.throwIfAborted();
+        if(user?.id!==owner)throw Error('登录状态已变化，请重新登录');
+        return work(owner,data,options);
+      });
+    }
+    handle('generationState',()=>generation.read(user?.id));
+    handle('generationCancel',operationId=>generation.cancel(user?.id,operationId));
+    handle('reportGenerate',id=>generate(id,'report',(owner,data,options)=>reports.generate(owner,id,data,options)));
     handle('reportOpen',async(id)=>{await results(id);const file=await reports.file(user.id,id);const error=await shell.openPath(file);if(error)throw Error('无法打开报告，请导出 HTML 后使用浏览器打开');return '已打开离线 HTML 报告';});
     handle('reportExport',async(id)=>{await results(id);const file=await reports.file(user.id,id);const choice=await dialog.showSaveDialog(win,{title:'导出图文拉片报告',defaultPath:`CineSleuth-${id}.html`,filters:[{name:'离线 HTML（含首帧图片）',extensions:['html']}]});if(choice.canceled)return '已取消导出';await fs.copyFile(file,choice.filePath);return 'HTML 已导出，图片已内嵌，可离线打开';});
     handle('modelStatus',async()=>models.status((await currentUser()).id));
-    handle('modelSave',async(input)=>models.save((await currentUser()).id,input));
-    handle('modelClear',async()=>models.clear((await currentUser()).id));
+    handle('modelSave',async(input)=>{idle();const owner=(await currentUser()).id;idle();return models.save(owner,input);});
+    handle('modelClear',async()=>{idle();const owner=(await currentUser()).id;idle();return models.clear(owner);});
     handle('modelList',async()=>models.models((await currentUser()).id));
     async function summaryFile(id){await results(id);return path.join(root,'summaries',String(user.id),id+'.json');}
     handle('summaryRead',async(id)=>{const file=await summaryFile(id);try{return JSON.parse(await fs.readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}});
-    handle('summarize',async(id)=>{const data=await results(id),owner=user.id;const value=await models.summarize(owner,data);const file=path.join(root,'summaries',String(owner),id+'.json');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file+'.tmp',JSON.stringify(value));await fs.rename(file+'.tmp',file);return value;});
+    handle('summarize',id=>generate(id,'summary',async(owner,data,options)=>{
+      const value=await models.summarize(owner,data,options);options.stage('正在保存完整总结');
+      const file=path.join(root,'summaries',String(owner),id+'.json');
+      await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file+'.tmp',JSON.stringify(value));
+      options.signal.throwIfAborted();await fs.rename(file+'.tmp',file);return value;
+    }));
     handle('summaryExport',async(id)=>{const value=JSON.parse(await fs.readFile(await summaryFile(id),'utf8'));const choice=await dialog.showSaveDialog(win,{title:'导出总结',defaultPath:`CineSleuth-${id}.md`,filters:[{name:'Markdown',extensions:['md']}]});if(choice.canceled)return '已取消导出';await fs.writeFile(choice.filePath,value.text);return '总结已导出';});
     handle('export',async(id)=>{
       const value=await results(id);
@@ -146,7 +163,7 @@ else {
     win.webContents.session.setPermissionRequestHandler((_,__,callback)=>callback(false));
     let closing=false;
     win.on('close',event=>{
-      if((models.busy||reports.busy)&&!closing){event.preventDefault();notify({type:'error',message:'正在生成报告，请等待完成后退出'});return;}
+      if((models.busy||reports.busy||generation.busy)&&!closing){event.preventDefault();notify({type:'error',message:'正在生成报告，可在生成动态中停止后退出，也可等待完成'});return;}
       if(!engine.running||closing)return;
       event.preventDefault();
       void dialog.showMessageBox(win,{type:'question',message:'任务正在处理中',detail:'退出将暂停本地流程。已提交到 Lab 的模型分析可能继续完成，可稍后恢复。',buttons:['继续处理','暂停并退出'],defaultId:0,cancelId:0})

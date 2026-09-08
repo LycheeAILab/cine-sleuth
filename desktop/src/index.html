@@ -14,11 +14,18 @@
 </section></div></aside>
 <main class="desktop-main"><header class="desktop-topbar"><span id="location">新建分析</span></header>
 <div id="notice" role="status" class="notice hidden"></div>
+<section id="generation-activity" class="generation-activity hidden" aria-label="生成动态">
+<div class="generation-heading"><div><span class="generation-eyebrow">生成动态</span><h2 id="generation-title">图文报告</h2></div><span id="generation-elapsed" class="generation-elapsed"></span><button id="generation-stop" type="button">停止生成</button><button id="generation-dismiss" type="button" class="hidden">收起</button></div>
+<p id="generation-message" class="generation-message" role="status"></p>
+<ol id="generation-steps" class="generation-steps"></ol>
+<div class="generation-footer"><span id="generation-counts"></span><span id="generation-wait"></span></div>
+</section>
 <section id="import-view"><h1>新建分析</h1>
 <div class="workspace"><div class="import-panel"><div class="tabs" role="tablist"><button id="tab-local" role="tab" aria-selected="true" class="active">本地视频</button><button id="tab-link" role="tab" aria-selected="false">分享链接</button></div>
 <div id="local-input" class="source-box"><div class="film-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z"/></svg></div><h2 id="file-name">选择一段视频</h2><p id="file-meta">MP4、MOV、WEBM、MKV · 最长 5 分钟</p><button id="select" class="secondary">浏览本地文件</button></div>
-<div id="link-input" class="source-box hidden"><div class="film-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 15 6-6M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 10a4 4 0 0 0 6 0l4-4a4 4 0 0 0-6-6l-1 1"/></svg></div><h2>粘贴视频分享链接</h2><textarea id="url" rows="3" placeholder="粘贴抖音链接或整段分享文字" aria-label="视频分享链接"></textarea><p>支持抖音分享链接。平台限制时可改用本地视频。</p></div>
-<label class="consent"><input type="checkbox" id="consent"><span>我有权使用此视频，同意将原视频上传至 Lab 保存并进行云端模型分析。</span></label>
+<div id="link-input" class="source-box hidden"><div class="film-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 15 6-6M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 10a4 4 0 0 0 6 0l4-4a4 4 0 0 0-6-6l-1 1"/></svg></div><h2>粘贴视频分享链接</h2><textarea id="url" rows="3" placeholder="粘贴抖音、Bilibili、YouTube 视频链接或分享文字" aria-label="视频分享链接"></textarea><p>支持抖音、Bilibili、YouTube。受网络或平台限制时，可改用本地视频。</p></div>
+<label class="consent"><input type="checkbox" id="consent"><span>我有权使用此视频，并使用云端能力进行分析。</span></label>
+<details class="data-note"><summary>数据说明</summary><p>分析所需的原视频会传至 LycheeAILab 的云端存储，并交由模型服务处理；原视频及模型结果保存在你的账号历史中。最终图文报告仅保存在本机。</p></details>
 <button id="start" class="primary" disabled>开始模型分析 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7z"/></svg></button>
 </div></div>
 <div class="section-heading"><h2>本机任务</h2></div><div id="tasks" class="task-list"><div class="empty">还没有任务，先导入一段视频。</div></div></section>
