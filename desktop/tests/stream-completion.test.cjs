@@ -9,7 +9,7 @@ async function fixture(handler,work){
  const request=(url,options,callback)=>{requests++;assert.equal(url,'https://api.siliconflow.cn/v1/chat/completions');assert.equal(options.timeout,undefined);return http.request(`http://127.0.0.1:${server.address().port}`,options,callback);};
  try{await work(request,()=>requests);}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 }
-test('real HTTP SSE: fragmented UTF-8, reasoning activity, stop and no reasoning leakage',async()=>{
+test('real HTTP SSE: fragmented UTF-8, reasoning activity, stop and bounded provider previews',async()=>{
  await fixture((req,res)=>{let body='';req.on('data',s=>body+=s);req.on('end',()=>{
   assert.equal(JSON.parse(body).stream,true);res.writeHead(200,{'Content-Type':'text/event-stream'});
   const data=Buffer.from(': ping\r\n\r\n'+packet({reasoning_content:'internal secret reasoning'})+packet({content:'你好，世界'})+packet({},'stop')+'data: [DONE]\n\n');
@@ -17,7 +17,7 @@ test('real HTTP SSE: fragmented UTF-8, reasoning activity, stop and no reasoning
  });},async request=>{
   const events=[];const result=await streamCompletion({key:'fixture'},{model:'fixture'},{onProgress:p=>events.push(p)},request);
   assert.equal(result.choices[0].message.content,'你好，世界');assert.equal(result.choices[0].finish_reason,'stop');
-  assert.ok(events.some(e=>e.phase==='reasoning'));assert.ok(!JSON.stringify(events).includes('internal secret'));
+  assert.ok(events.some(e=>e.phase==='reasoning'));assert.ok(events.some(e=>e.reasoningPreview==='internal secret reasoning'));assert.equal(result.choices[0].message.reasoning_content,undefined);
   assert.equal(events.at(-1).outputChars,5);
  });
 });
@@ -53,4 +53,21 @@ test('length finish stays explicit so callers reject partial reports',async()=>{
  await fixture((_,res)=>{res.writeHead(200,{'Content-Type':'text/event-stream'});res.end(packet({content:'partial'},'length')+'data: [DONE]\n\n');},async request=>{
   assert.equal((await streamCompletion({key:'fixture'},{},{},request)).choices[0].finish_reason,'length');
  });
+});
+
+test('more than 16 MB of SSE overhead does not truncate a small valid report',async()=>{
+ await fixture((_,res)=>{res.writeHead(200,{'Content-Type':'text/event-stream'});
+  const frame=packet({reasoning_content:'想'})+': heartbeat '+'.'.repeat(8000)+'\n\n';
+  let n=0;function send(){while(n++<2300){if(!res.write(frame)){res.once('drain',send);return;}}res.end(packet({content:'完整报告'})+packet({},'stop')+'data: [DONE]\n\n');}send();
+ },async request=>{let last;const result=await streamCompletion({key:'fixture'},{},{onProgress:p=>last=p},request);assert.equal(result.choices[0].message.content,'完整报告');assert.ok(last.wireBytes>16*1024*1024);assert.ok(last.reasoningChars>2000);assert.ok(last.reasoningPreview.length<=8000);});
+});
+test('large reasoning stream uses bounded preview but does not consume body budget',async()=>{
+ await fixture((_,res)=>{res.writeHead(200,{'Content-Type':'text/event-stream'});const frame=packet({reasoning_content:'推'.repeat(8000)});for(let i=0;i<100;i++)res.write(frame);res.end(packet({content:'正文'})+packet({},'stop'));},async request=>{let last;const result=await streamCompletion({key:'fixture'},{},{onProgress:p=>last=p},request);assert.equal(result.choices[0].message.content,'正文');assert.equal(last.reasoningChars,800000);assert.equal(last.reasoningPreview.length,8000);});
+});
+test('bounded unframed or multiline events and real body limit remain enforced',async()=>{
+ for(const kind of ['line','event','body'])await fixture((_,res)=>{res.writeHead(200,{'Content-Type':'text/event-stream'});
+  if(kind==='line')return res.end('data: '+ 'x'.repeat(1024*1024+1));
+  if(kind==='event')return res.end(('data: '+ 'x'.repeat(16000)+'\n').repeat(70));
+  for(let n=0;n<140;n++)res.write(packet({content:'x'.repeat(16000)}));res.end(packet({},'stop'));
+ },async(request,count)=>{await assert.rejects(streamCompletion({key:'fixture'},{},{},request),/1 MB|2 MB/);assert.equal(count(),1);});
 });

@@ -1,4 +1,5 @@
 const https = require('node:https');
+const MAX_EVENT_BYTES = 1024 * 1024, MAX_CONTENT_BYTES = 2 * 1024 * 1024, PREVIEW_CHARS = 8000;
 
 function cancelled() { return Object.assign(Error('已停止本次生成；已有文件保留，不会自动重新请求'), {name: 'AbortError'}); }
 function httpError(status) {
@@ -10,13 +11,13 @@ function httpError(status) {
 // wall-clock generation timeout, no redirects and no automatic paid retry.
 function streamCompletion(config, body, {signal, onProgress = () => {}} = {}, request = https.request) {
   return new Promise((resolve, reject) => {
-    let req, response, settled = false, buffer = '', content = '', reasoningChars = 0, finish = null, bytes = 0;
-    let eventLines = [], lastEmit = 0, lastPhase = '';
+    let req, response, settled = false, buffer = '', content = '', reasoningChars = 0, finish = null, contentBytes = 0, wireBytes = 0, events = 0, reasoningPreview = '';
+    let eventLines = [], eventBytes = 0, lastEmit = 0, lastPhase = '';
     const progress = (phase, force = false) => {
       const now = Date.now();
       if (force || phase !== lastPhase || now - lastEmit >= 200) {
         lastEmit = now; lastPhase = phase;
-        onProgress({phase, model: body.model, outputChars: content.length, reasoningChars, lastActivityAt: now});
+        onProgress({phase, model: body.model, outputChars: content.length, reasoningChars, reasoningPreview, outputPreview: content.slice(-PREVIEW_CHARS), wireBytes, events, lastActivityAt: now});
       }
     };
     const settle = (error, value) => {
@@ -34,21 +35,32 @@ function streamCompletion(config, body, {signal, onProgress = () => {}} = {}, re
     };
     const event = () => {
       if (!eventLines.length) return;
-      const data = eventLines.join('\n'); eventLines = [];
+      const data = eventLines.join('\n'); eventLines = []; eventBytes = 0; events++;
       if (data.trim() === '[DONE]') return complete();
       let value;
       try { value = JSON.parse(data); } catch { return settle(Error('模型流式响应格式无效，未保存不完整结果')); }
       if (value.error) return settle(Error('模型在生成过程中返回错误，请检查供应商状态；不会自动重试'));
       const choice = value.choices?.[0], delta = choice?.delta;
-      if (typeof delta?.reasoning_content === 'string') reasoningChars += delta.reasoning_content.length;
-      if (typeof delta?.content === 'string') content += delta.content;
+      if (typeof delta?.reasoning_content === 'string') {
+        reasoningChars += delta.reasoning_content.length;
+        reasoningPreview = (reasoningPreview + delta.reasoning_content).slice(-PREVIEW_CHARS);
+      }
+      if (typeof delta?.content === 'string') {
+        contentBytes += Buffer.byteLength(delta.content);
+        if (contentBytes > MAX_CONTENT_BYTES) return settle(Error('模型正文超过 2 MB，已停止接收；已有报告保留'));
+        content += delta.content;
+      }
       if (choice?.finish_reason) finish = choice.finish_reason;
-      // Report activity counts only; never retain or expose the model's reasoning text.
+      // Preview only provider-returned text, in bounded memory; never add reasoning to saved reports.
       progress(delta?.content ? 'writing' : delta?.reasoning_content ? 'reasoning' : lastPhase || 'waiting');
     };
     const line = value => {
       if (value === '') event();
-      else if (value.startsWith('data:')) eventLines.push(value.slice(5).replace(/^ /, ''));
+      else if (value.startsWith('data:')) {
+        const part = value.slice(5).replace(/^ /, ''); eventBytes += Buffer.byteLength(part);
+        if (eventBytes > MAX_EVENT_BYTES) return settle(Error('模型单条流式消息超过 1 MB，响应格式异常；已有报告保留'));
+        eventLines.push(part);
+      }
     };
     if (signal?.aborted) return abort();
     signal?.addEventListener('abort', abort, {once: true});
@@ -65,13 +77,16 @@ function streamCompletion(config, body, {signal, onProgress = () => {}} = {}, re
         res.setEncoding('utf8'); progress('waiting', true);
         res.on('data', chunk => {
           if (settled) return;
-          bytes += Buffer.byteLength(chunk);
-          if (bytes > 16 * 1024 * 1024) return settle(Error('模型返回内容过大，已停止接收；未保存不完整结果'));
+          wireBytes += Buffer.byteLength(chunk);
+          // Wire overhead/heartbeats are not retained output and must not limit a long stream.
           buffer += chunk;
           let index;
           while (!settled && (index = buffer.indexOf('\n')) >= 0) {
-            const value = buffer.slice(0, index).replace(/\r$/, ''); buffer = buffer.slice(index + 1); line(value);
+            const value = buffer.slice(0, index).replace(/\r$/, ''); buffer = buffer.slice(index + 1);
+            if (Buffer.byteLength(value) > MAX_EVENT_BYTES) return settle(Error('模型单行流式消息超过 1 MB，响应格式异常；已有报告保留'));
+            line(value);
           }
+          if (!settled && Buffer.byteLength(buffer) > MAX_EVENT_BYTES) settle(Error('模型流式消息缺少分隔或超过 1 MB；已有报告保留'));
         });
         res.on('end', () => { if (!settled) { if (buffer) line(buffer.replace(/\r$/, '')); event(); if (!settled) complete(); } });
         res.on('error', () => settle(Error('生成过程中连接中断；未保存不完整结果，不会自动重试')));

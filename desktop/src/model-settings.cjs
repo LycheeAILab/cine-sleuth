@@ -11,7 +11,10 @@ class ModelSettings {
   async clear(user){if(this.busy)throw Error('总结进行中，请稍后删除配置');await fs.rm(this.file(user),{force:true});}
   async call(config,endpoint,body,options){
     if(!config.key)throw Error('请先保存硅基流动 API Key');
-    if(body)return this.stream(config,body,options);
+    if(body){
+      // SiliconFlow max_tokens excludes reasoning; set its separate budget explicitly.
+      return this.stream(config,{thinking_budget:4096,...body},options);
+    }
     let response;
     try{response=await this.request('https://api.siliconflow.cn/v1/'+endpoint,{headers:{Authorization:'Bearer '+config.key},redirect:'error',signal:AbortSignal.timeout(30000)});}
     catch{throw Error('同步模型列表连接失败或超时，请检查网络');}

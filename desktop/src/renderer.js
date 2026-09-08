@@ -108,8 +108,12 @@ function renderGeneration(value){
   const list=$('generation-steps'),nearBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-20;
   list.replaceChildren(...value.steps.map(step=>{const li=element('li');li.append(element('time',duration(step.at-value.startedAt)),element('span',step.message));return li;}));
   if(nearBottom)list.scrollTop=list.scrollHeight;
-  $('generation-counts').textContent=`已接收正文 ${(value.outputChars||0).toLocaleString()} 字符`+(value.reasoningChars?` · 检测到模型推理输出`:'');
-  $('generation-stop').classList.toggle('hidden',value.status!=='running');$('generation-stop').disabled=!!value.cancelling;
+  $('generation-counts').textContent=`已接收正文 ${(value.outputChars||0).toLocaleString()} 字符`+(value.reasoningChars?` · 推理 ${value.reasoningChars.toLocaleString()} 字符`:'');
+  $('generation-reasoning-panel').classList.toggle('hidden',!value.reasoningPreview);
+    $('generation-reasoning').textContent=value.reasoningPreview||'';
+    $('generation-output-panel').classList.toggle('hidden',!value.outputPreview);
+    $('generation-output').textContent=value.outputPreview||'';
+    $('generation-stop').classList.toggle('hidden',value.status!=='running');$('generation-stop').disabled=!!value.cancelling;
   $('generation-dismiss').classList.toggle('hidden',value.status==='running');
   tickGeneration();setBusy();
 }

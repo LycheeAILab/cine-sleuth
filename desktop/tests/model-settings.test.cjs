@@ -17,3 +17,5 @@ test('BYOK is isolated, hidden, retained on blank; streaming receives cancellati
   await assert.rejects(models.models('a'),/Key 无效/);await models.clear('a');assert.equal((await models.status('a')).configured,false);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('provider call specifies a separate thinking budget, retaining caller output limit',async()=>{let sent;const model=new ModelSettings('.',{},null,async(_,body)=>{sent=body;return {};});await model.call({key:'test'},'chat/completions',{model:'zai-org/GLM-5.3',max_tokens:16384});assert.equal(sent.thinking_budget,4096);assert.equal(sent.max_tokens,16384);});

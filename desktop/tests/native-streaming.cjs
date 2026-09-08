@@ -16,7 +16,7 @@ const {saveJson}=require('../src/pipeline.cjs');
  global.requests=0;
  const packet=(delta,finish_reason=null)=>'data: '+JSON.stringify({choices:[{delta,finish_reason}]})+'\\n\\n';
  const server=http.createServer((req,res)=>{global.requests++;req.resume();
-  const timer=setTimeout(()=>{res.writeHead(200,{'Content-Type':'text/event-stream'});res.write(packet({reasoning_content:'synthetic reasoning must not appear'}));
+  const timer=setTimeout(()=>{res.writeHead(200,{'Content-Type':'text/event-stream'});res.write(packet({reasoning_content:'正在核对测试证据 <img src=x onerror=alert(1)>'}));
    setTimeout(()=>{if(res.destroyed)return;res.write(packet({content:'# 已完成的测试总结\\n\\n这是合成测试证据。'}));},500);
    if(global.requests===1)setTimeout(()=>{if(!res.destroyed)res.end(packet({},'stop')+'data: [DONE]\\n\\n');},1700);
   },global.requests===1?${waitMs}:10);res.on('close',()=>clearTimeout(timer));
@@ -49,7 +49,7 @@ const {saveJson}=require('../src/pipeline.cjs');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await page.screenshot({path:path.join(folder,'streaming-'+width+'.png'),fullPage:true});
   }
-  assert.ok(!(await page.locator('#generation-activity').textContent()).includes('synthetic reasoning'));
+  await page.locator('#generation-reasoning-panel summary').click();assert.ok((await page.locator('#generation-reasoning').textContent()).includes('正在核对测试证据'));assert.equal(await page.locator('#generation-reasoning img').count(),0);await page.locator('#generation-counts').filter({hasText:'推理'}).waitFor();
   await page.locator('#nav-settings').click();assert.equal(await page.locator('#generation-activity').isVisible(),true);assert.equal(await page.locator('#save-settings').isEnabled(),false);
   await page.locator('#generation-stop').click();await page.locator('#generation-activity[data-status="cancelled"]').waitFor();
   assert.equal(await electron.evaluate(()=>global.requests),2);assert.equal(await page.locator('#logout').isEnabled(),true);

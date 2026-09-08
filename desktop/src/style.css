@@ -133,6 +133,7 @@ progress::-webkit-progress-value{background:var(--blue)}
 .generation-steps{margin:0;padding:0;list-style:none;max-height:170px;overflow:auto;scrollbar-width:thin}
 .generation-steps li{display:flex;align-items:baseline;gap:16px;color:#66778f;font-size:13px;padding:5px 0}
 .generation-steps time{font-variant-numeric:tabular-nums;color:#8898ad;flex-shrink:0}
+.generation-preview{margin:14px 0;border-top:1px solid #e8eef7;padding-top:10px}.generation-preview summary{color:#52729b;font-size:13px;cursor:pointer}.generation-preview pre{max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.7 "Segoe UI","Microsoft YaHei",sans-serif;color:#53657d;background:#f7faff;border-radius:8px;padding:12px}
 .generation-footer{display:flex;flex-wrap:wrap;gap:8px 24px;border-top:1px solid #e8eef7;margin-top:16px;padding-top:13px;color:#76869b;font-size:12px}
 .generation-footer span{min-width:0}
 @keyframes generation-pulse{50%{opacity:.3}}
