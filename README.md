@@ -15,7 +15,7 @@
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
 
-  [![下载 Windows 客户端](https://img.shields.io/badge/Windows-下载桌面端-2563EB?style=for-the-badge)](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.1-Windows-x64-Setup.exe)
+  [![下载 Windows 客户端](https://img.shields.io/badge/Windows-下载桌面端-2563EB?style=for-the-badge)](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.2-Windows-x64-Setup.exe)
 
   [核心能力](#-核心能力) · [一句话拉片](#-一句话拉片) · [安装](#-安装) · [工作方式](#-agent-如何完成拉片)
 </div>
@@ -26,14 +26,14 @@
 
 不使用 Codex 或 WorkBuddy，也可以通过 **镜探 · CineSleuth Windows 客户端**分析视频。
 
-**[下载 Windows 客户端 · 2.0.1（x64）](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.1-Windows-x64-Setup.exe)**
+**[下载 Windows 客户端 · 2.0.2（x64）](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.2-Windows-x64-Setup.exe)**
 
 - 使用现有 **LycheeAILab 账号**登录，无需手动复制 Lab API Key。
 - 支持本地视频、授权抖音链接、云端分析结果、历史记录和 JSON 导出。
-- 可自行配置硅基流动 Key，手动生成总结并导出 Markdown；当前桌面版不包含 Skill 的 Agent 图文报告与分镜首帧流程。
+- 可自行配置硅基流动 Key，生成逐镜图文报告、视频生成提示词与每段原片首帧，导出图片内嵌的离线 HTML；保留文字总结与 Markdown 导出。需保留本机任务时间清单和原片，最终报告不会自动上传。
 - Lab 浅蓝白主题，左下角下载图标可查看更新进度；新版下载后点击“重启安装”。
 
-> Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.1`，功能范围见 [桌面说明](desktop/README.md)。
+> Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.2`，功能范围见 [桌面说明](desktop/README.md)。
 
 ## ✨ 核心能力
 
