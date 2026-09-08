@@ -15,7 +15,7 @@ test('local and link imports use the same Lab pipeline; resume skips completed m
         if(route.endsWith('/upload-complete'))return {};
         if(route===`/api/cine-sleuth/jobs/${id}`)return {jobId:id,originalVideo:{status:'ready'}};
         if(route.includes('/chunks/')){if(done)return {status:'completed',result:{}};const error=Error('not found');error.status=404;throw error;}
-        if(route.endsWith('/analyze')){analyzed++;assert.equal(options.body.get('jobId'),id);assert.equal(options.body.get('video').type,'video/mp4');done=true;return {};}
+        if(route.endsWith('/analyze')){analyzed++;assert.equal(options.body.get('jobId'),id);assert.equal(options.body.get('video').type,'video/mp4');done=true;if(mode==='link')throw Object.assign(Error('response timed out after completion'),{status:504});return {};}
         if(route.endsWith('/complete'))return {status:'completed'};
         if(route.endsWith('/model-results'))return {kind:'model_analysis',chunks:[{chunkKey:'chunk-001',status:'completed',result:{}}]};
         throw Error('Unexpected route '+route);

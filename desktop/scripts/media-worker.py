@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from uuid import uuid4
 
 for stream in (sys.stdin, sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
@@ -33,7 +34,7 @@ def direct(url, output):
         command = [sys.executable, "--douk", url, str(output)]
     else:
         command = [sys.executable, str(Path(__file__).resolve()), "--douk", url, str(output)]
-    child = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600, creationflags=0x08000000 if os.name == "nt" else 0)
+    child = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, creationflags=0x08000000 if os.name == "nt" else 0)
     if child.returncode:
         raise prepare_video_source.SourceError(child.stderr.strip()[-1000:] or "链接取片失败")
     return prepare_video_source.validate_video(Path(json.loads(child.stdout)["video"]))
@@ -53,11 +54,30 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     prepare_video_source.download_with_douk_direct = direct
     if request.get("url"):
-        cached = output / "source.mp4"
+        try:
+            prepare_video_source.authorized_url(request["url"])
+        except prepare_video_source.SourceError:
+            raise ValueError("请输入支持的抖音 HTTPS 分享链接，或直接导入本地视频")
+        cache_record = output / "resolved-source.json"
+        cached = Path(json.loads(cache_record.read_text(encoding="utf-8"))["video"]) if cache_record.is_file() else output / "source.mp4"
+        source = None
         if cached.is_file():
-            source = prepare_video_source.validate_video(cached)
-        else:
-            source, _ = prepare_video_source.download_douyin(request["url"], cached)
+            try:
+                source = prepare_video_source.validate_video(cached)
+            except prepare_video_source.SourceError:
+                pass
+        if source is None:
+            # Partial downloads from a failed attempt must not poison the next one.
+            target = output / "link-attempts" / str(uuid4()) / "source.mp4"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                source, _ = prepare_video_source.download_douyin(request["url"], target)
+            except (prepare_video_source.SourceError, OSError, subprocess.TimeoutExpired) as error:
+                if "no longer than 5 minutes" in str(error):
+                    raise ValueError("视频不能超过 5 分钟，请换一条视频")
+                print(json.dumps({"code":"LINK_RESOLUTION_FAILED","message":"链接暂时解析失败"}), file=sys.stderr)
+                sys.exit(2)
+            cache_record.write_text(json.dumps({"video":str(source)}), encoding="utf-8")
     else:
         source = prepare_video_source.validate_video(Path(request["video"]))
     if source.stat().st_size > 5*1024**3:

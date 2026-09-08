@@ -34,25 +34,29 @@ function renderPrompt(markdown,manifest,chunk) {
 function prepareMedia(worker,request,runtime,signal) {
   return new Promise((resolve,reject)=>{
     const child=spawn(worker,[],{windowsHide:true,env:{...process.env,PATH:runtime+path.delimiter+process.env.PATH,PYTHONUTF8:'1',PYTHONIOENCODING:'utf-8'},stdio:['pipe','pipe','pipe']});
-    let output='',error='';
+    let output='',error='',timedOut=false;
     const stop=()=>{if(child.pid)spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'}).on('error',()=>child.kill());};
     signal.addEventListener('abort',stop,{once:true});
-    const timeout=setTimeout(stop,20*60*1000);
+    const timeout=setTimeout(()=>{timedOut=true;stop();},20*60*1000);
     child.stdout.on('data',data=>{output+=data.toString('utf8');});
     child.stderr.on('data',data=>{error=(error+data.toString('utf8')).slice(-4000);});
     child.on('error',reject);child.stdin.on('error',()=>{});
     child.on('close',code=>{
       clearTimeout(timeout);signal.removeEventListener('abort',stop);
       if(signal.aborted)return reject(Error('已暂停，本地进度已保留'));
-      if(code!==0)return reject(Error(error.trim()||'媒体准备失败，请换用本地视频重试'));
+      if(timedOut)return reject(Error('媒体准备等待超时，请改用本地视频或稍后继续'));
+      if(code!==0){
+        if(error.includes('"LINK_RESOLUTION_FAILED"'))return reject(Object.assign(Error('链接暂时解析失败'),{code:'LINK_RESOLUTION_FAILED'}));
+        return reject(Error(error.trim()||'媒体准备失败，请换用本地视频重试'));
+      }
       try {resolve(JSON.parse(output));}catch{reject(Error('媒体工具返回无效结果'));}
     });
     child.stdin.end(JSON.stringify(request));
   });
 }
 class AnalysisPipeline {
-  constructor({client,root,runtime,promptFile,notify,prepare=prepareMedia,upload=uploadOriginal}) {
-    Object.assign(this,{client,root,runtime,promptFile,notify,prepare,upload});this.running=null;
+  constructor({client,root,runtime,promptFile,notify,prepare=prepareMedia,upload=uploadOriginal,wait=delay}) {
+    Object.assign(this,{client,root,runtime,promptFile,notify,prepare,upload,wait});this.running=null;
   }
   async tasks(userId) {
     const dir=path.join(this.root,userId);await fs.mkdir(dir,{recursive:true});
@@ -85,13 +89,31 @@ class AnalysisPipeline {
   }
   async update(task) {await saveJson(path.join(this.root,task.userId,task.id,'task.json'),task);this.notify({type:'task',task});}
   async pause() {if(this.running){this.running.controller.abort();await this.running.promise;}}
+  async readChunk(route,signal){
+    for(let attempt=1;attempt<=3;attempt++){
+      try{return await this.client.api(route,{signal});}
+      catch(error){
+        if(signal.aborted||attempt===3||(error.status&&error.status<500&&![408,429].includes(error.status)))throw error;
+        await this.wait(attempt*2000,undefined,{signal});
+      }
+    }
+  }
   async run(task,signal) {
     const dir=path.join(this.root,task.userId,task.id),manifestFile=path.join(dir,'manifest.json');
     let manifest;
     try{manifest=JSON.parse(await fs.readFile(manifestFile,'utf8'));}catch{}
     if(!manifest) {
       task.status='preparing';task.stage=task.source.url?'正在从链接下载并准备视频…':'正在探测视频并准备分析片段…';await this.update(task);
-      await this.prepare(path.join(this.runtime,'cine-media','cine-media.exe'),{...task.source,outputDir:dir},this.runtime,signal);
+      for(let attempt=1;attempt<=3;attempt++){
+        signal.throwIfAborted();
+        if(task.source.url){task.linkAttempts=attempt;task.stage=`正在解析链接 · 第 ${attempt}/3 次尝试`;await this.update(task);}
+        try {await this.prepare(path.join(this.runtime,'cine-media','cine-media.exe'),{...task.source,outputDir:dir},this.runtime,signal);break;}
+        catch(error){
+          if(signal.aborted||!task.source.url||error.code!=='LINK_RESOLUTION_FAILED')throw error;
+          if(attempt===3)throw Error('链接解析已尝试 3 次，仍未成功。该链接可能无法解析、已失效或受平台限制；请换一个链接，或下载后导入本地视频。');
+          task.stage=`第 ${attempt} 次解析失败，即将重试…`;await this.update(task);await this.wait(attempt*2000,undefined,{signal});
+        }
+      }
       manifest=JSON.parse(await fs.readFile(manifestFile,'utf8'));
     }
     signal.throwIfAborted();
@@ -115,19 +137,19 @@ class AnalysisPipeline {
       signal.throwIfAborted();
       task.status='analyzing';task.stage=`模型分析中 · ${task.completed+1} / ${task.total}`;await this.update(task);
       const route=`/api/cine-sleuth/jobs/${task.jobId}/chunks/${encodeURIComponent(chunk.chunk_id)}`;
-      let state=await this.client.api(route,{signal}).catch(error=>{if(error.status===404)return null;throw error;});
+      let state=await this.readChunk(route,signal).catch(error=>{if(error.status===404)return null;throw error;});
       if(state?.status!=='completed'&&state?.status!=='processing'){
         const video=await fs.readFile(chunk.path);
         if(video.length>12*1024*1024)throw Error('分析片段超过 Lab 12 MB 限制，请重新导入');
         const form=new FormData();form.set('jobId',task.jobId);form.set('chunkKey',chunk.chunk_id);form.set('prompt',renderPrompt(prompt,manifest,chunk));form.set('video',new Blob([video],{type:'video/mp4'}),`${chunk.chunk_id}.mp4`);
-        try {await this.client.api('/api/cine-sleuth/analyze',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(360000)])});}
-        catch(error){if(signal.aborted)throw error;if(error.status&&error.status!==409&&error.status<500)throw error;}
-        state=await this.client.api(route,{signal});
+        try {await this.client.api('/api/cine-sleuth/analyze',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(660000)])});}
+        catch(error){if(signal.aborted)throw error;if(error.status&&error.status!==409&&error.status<500)throw error;task.stage='请求等待中断，正在查询原任务状态（不会重复提交分析）';await this.update(task);}
+        state=await this.readChunk(route,signal);
       }
-      const deadline=Date.now()+7*60*1000;
+      const deadline=Date.now()+12*60*1000;
       while(state.status==='processing'||state.status==='queued') {
         if(Date.now()>deadline)throw Error('Lab 仍在分析，请稍后点击继续');
-        await delay(3000,undefined,{signal});state=await this.client.api(route,{signal});
+        await this.wait(3000,undefined,{signal});state=await this.readChunk(route,signal);
       }
       if(state.status!=='completed')throw Error(state.errorMessage||'片段分析失败，可点击继续');
       task.completed++;await this.update(task);

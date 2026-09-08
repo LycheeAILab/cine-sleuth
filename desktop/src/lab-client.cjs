@@ -4,8 +4,15 @@ class LabClient {
   constructor(base, storage, request=fetch) {this.base=base;this.storage=storage;this.request=request;this.tokens=null;this.refreshing=null;}
   async initialize() {this.tokens=await this.storage.read();}
   async raw(path, options={}) {
-    const response=await this.request(this.base+path,{...options,redirect:'error',signal:options.signal||AbortSignal.timeout(420000)});
-    const text=await response.text();let body;try{body=JSON.parse(text);}catch{body=null;}
+    const deadline=AbortSignal.timeout(path==='/api/cine-sleuth/analyze'?660000:60000);
+    const signal=options.signal?AbortSignal.any([options.signal,deadline]):deadline;
+    let response,text;
+    try{response=await this.request(this.base+path,{...options,redirect:'error',signal});text=await response.text();}
+    catch(error){
+      if(error.name==='TimeoutError'||signal.reason?.name==='TimeoutError'||['UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT'].includes(error.cause?.code))throw Object.assign(new LabError(504,'等待 Lab 响应超时。已提交的云端任务可能仍在处理，请稍后继续原任务；不会自动重复提交分析。'),{code:'LAB_TIMEOUT'});
+      throw error;
+    }
+    let body;try{body=JSON.parse(text);}catch{body=null;}
     if (!response.ok) throw new LabError(response.status,response.status===404&&path.startsWith('/api/desktop-auth/')?'Lab 尚未部署桌面登录接口，请先更新服务端':typeof body?.message==='string'?body.message:`Lab 请求失败（${response.status}）`);
     if (!body) throw Error('Lab 返回格式无效，请确认服务端已更新');
     return body;

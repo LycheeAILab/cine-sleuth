@@ -10,13 +10,14 @@ const {autoUpdater}=require('electron-updater');
 const {ModelSettings}=require('./model-settings.cjs');
 const {VisualReports}=require('./visual-report.cjs');
 const {AnalysisPipeline} = require('./pipeline.cjs');
+const {HiddenRecords} = require('./hidden-records.cjs');
 const base=labOrigin(process.env.CINESLEUTH_LAB_URL,app.isPackaged);
 const page=pathToFileURL(path.join(__dirname,'index.html')).href;
-let win,client,engine,models,reports,pending,user,authenticating=false,selectedVideo=null;
+let win,client,engine,models,reports,pending,user,authenticating=false,recordBusy=false,selectedVideo=null;
 const notify=payload=>{if(win&&!win.isDestroyed())win.webContents.send('cine:event',payload);};
 async function handleCallback(value) {
   try {
-    if(!client||engine?.running||models?.busy||reports?.busy||authenticating)throw Error('请先结束当前操作，再重新登录');
+    if(!client||engine?.running||models?.busy||reports?.busy||authenticating||recordBusy)throw Error('请先结束当前操作，再重新登录');
     const input=acceptCallback(value,pending);pending=null;authenticating=true;
     await client.exchange(input);user=(await client.api('/api/desktop-auth/me')).user;
     selectedVideo=null;notify({type:'auth',user});
@@ -33,6 +34,7 @@ else {
   app.on('open-url',(event,url)=>{event.preventDefault();void handleCallback(url);});
   app.whenReady().then(async()=>{
     const root=app.getPath('userData');await fs.mkdir(root,{recursive:true});
+    const hiddenRecords=new HiddenRecords(path.join(root,'hidden-records'));
     models=new ModelSettings(path.join(root,'model-settings'),safeStorage);
     const tokenFile=path.join(root,'desktop-session.enc');
     const storage={
@@ -58,12 +60,12 @@ else {
     if(app.isPackaged)app.setAsDefaultProtocolClient(SCHEME);
     else app.setAsDefaultProtocolClient(SCHEME,process.execPath,[path.resolve(__dirname,'..')]);
     async function currentUser(){user=(await client.api('/api/desktop-auth/me')).user;return user;}
-    function idle(){if(engine.running||authenticating||models.busy||reports.busy)throw Error('请先完成或暂停当前操作');}
+    function idle(){if(engine.running||authenticating||models.busy||reports.busy||recordBusy)throw Error('请先完成或暂停当前操作');}
     function handle(name,fn){ipcMain.handle('cine:'+name,async(event,...args)=>{
       if(event.sender!==win.webContents||event.senderFrame?.url!==page)throw Error('请求来源无效');
       try{return {ok:true,value:await fn(...args)};}catch(error){return {ok:false,message:error.message};}
     });}
-    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||reports.busy||authenticating});
+    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||reports.busy||authenticating||recordBusy});
     updates.on('state',state=>notify({type:'update',state}));
     handle('updateState',()=>updates.state);
     handle('updateCheck',()=>updates.check());
@@ -73,7 +75,7 @@ else {
       let authError=null;
       if(client.tokens){try{await currentUser();}catch(error){authError=error.message;if(error.status===401)user=null;}}
       else user=null;
-      return {user,authError,base,running:engine.running?.task.id||null,tasks:user?await engine.tasks(user.id):[]};
+      return {user,authError,base,running:engine.running?.task.id||null,tasks:user?await hiddenRecords.filter(user.id,await engine.tasks(user.id)):[]};
     });
     handle('login',async()=>{idle();pending=beginLogin(base,os.hostname());await shell.openExternal(pending.url);return '请在浏览器完成 Lab 授权';});
     handle('logout',async()=>{idle();await client.logout();user=null;pending=null;selectedVideo=null;});
@@ -94,9 +96,27 @@ else {
     });
     handle('resume',async(id)=>{idle();return engine.resume(await currentUser(),id);});
     handle('pause',()=>engine.pause());
+    handle('removeRecord',async(input)=>{
+      idle();recordBusy=true;
+      try {
+        const owner=(await currentUser()).id;
+        if(!input||!['local','cloud'].includes(input.kind)||!/^[a-f0-9-]{36}$/.test(input.id||''))throw Error('任务编号无效');
+        const tasks=await engine.tasks(owner);
+        let record;
+        if(input.kind==='local')record=tasks.find(item=>item.id===input.id);
+        else {await client.api(`/api/cine-sleuth/jobs/${input.id}`);record=tasks.find(item=>item.jobId===input.id)||{jobId:input.id};}
+        if(!record)throw Error('当前账户没有这条记录');
+        const choice=await dialog.showMessageBox(win,{type:'question',message:'从本机列表移除此记录？',detail:'仅隐藏本机列表中的记录。云端历史、原视频和已生成的报告文件都会保留。',buttons:['取消','从本机移除'],defaultId:0,cancelId:0});
+        if(choice.response!==1)return false;
+        if(user?.id!==owner||engine.running||models.busy||reports.busy)throw Error('当前状态已变化，请结束操作后再移除');
+        await hiddenRecords.hide(owner,record);return true;
+      }finally{recordBusy=false;}
+    });
     handle('history',async(before)=>{
       await currentUser();if(before&&!/^[a-f0-9-]{36}$/.test(before))throw Error('分页参数无效');
-      return client.api('/api/cine-sleuth/jobs'+(before?'?before='+encodeURIComponent(before):''));
+      const owner=user.id;
+      const data=await client.api('/api/cine-sleuth/jobs'+(before?'?before='+encodeURIComponent(before):''));
+      return {...data,jobs:await hiddenRecords.filter(owner,data.jobs)};
     });
     async function results(id){await currentUser();if(!/^[a-f0-9-]{36}$/.test(id))throw Error('任务编号无效');return client.api(`/api/cine-sleuth/jobs/${id}/model-results`);}
     handle('results',results);
