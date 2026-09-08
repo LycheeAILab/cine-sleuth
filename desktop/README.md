@@ -1,4 +1,6 @@
-# 镜探 Windows 桌面端 · 0.2.1 Preview
+# 镜探 Windows 桌面端 · 2.0.0
+
+本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.0`，与 Skill `v2.0.0` 独立。
 
 本阶段实现：Lab 浏览器授权 → 本地视频或抖音链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史 → JSON 导出。支持用户手动调用硅基流动生成并导出跨段总结；用户 Agent、分镜首帧及云端最终报告归档未接入。
 
@@ -6,7 +8,7 @@
 
 ## 使用
 
-1. 配套 Lab 更新部署完成后，运行 `release/CineSleuth-0.2.1-Windows-x64-Setup.exe` 安装。
+1. 运行 [Windows x64 2.0.0 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.0-Windows-x64-Setup.exe) 安装。
 2. 点击“登录 LycheeAILab”，在系统浏览器登录并授权，返回桌面端。
 3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音分享链接。确认云端上传后开始分析。
 4. 查看本机进度及模型结果。失败或重启后点击“继续”，已完成的云端片段会跳过。暂停本地流程不会取消已经提交到 Lab 的模型请求。
@@ -56,7 +58,7 @@ Electron 用户数据目录中，`desktop-session.enc` 用 Windows DPAPI 加密�
 
 2026-09-08 已使用临时测试账号完成正式 Lab 浏览器密码登录、PKCE 授权、刷新及设备撤销；使用一段 4 秒自制视频，经过安装包内同版媒体运行环境，完成真实 COS 上传、Lab 模型分析及云端结果保存。生产 MySQL 实测授权码并发一次消费、刷新重放撤销、设备归属及个人 API Key 不受影响；测试账号、任务和 COS 对象均已清理。抖音取片沿用现有两级下载器，尚未用真实抖音链接实测。
 
-当前 Preview 安装包未配置代码签名；正式公开分发前需完成签名、干净 Windows 安装升级验证及第三方许可证／对应源代码交付核对。
+当前 2.0.0 安装包未配置代码签名，Windows 可能提示发布者未验证。原生启动、模拟业务流程及真实更新下载校验不等同于干净 Windows 覆盖安装；签名、干净 Windows 安装升级及第三方对应源代码交付完整性仍需补充核对。下方 0.2.x 内容为历史发布记录。
 
 第三方取片代码及其许可证随安装包保留，见仓库 `THIRD_PARTY_NOTICES.md`。FFmpeg 及 Python 依赖许可随运行环境交付。使用的 OAuth 登录设计依据 [RFC 8252](https://www.rfc-editor.org/info/rfc8252/) 和 [RFC 9700](https://www.rfc-editor.org/info/rfc9700/)。
 

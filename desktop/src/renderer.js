@@ -4,7 +4,7 @@ let state={tasks:[],user:null},mode='local',selected=false,view='import',previou
 function notice(text){$('notice').textContent=text||'';$('notice').classList.toggle('hidden',!text);}
 async function perform(fn){try{return await fn();}catch(error){notice(error.message);}}
 function element(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
-function switchView(value){view=value;for(const item of ['import','history','result','settings','updates'])$(item+'-view').classList.toggle('hidden',item!==value);$('location').textContent=value==='import'?'新建分析':value==='history'?'分析历史':value==='settings'?'模型设置':value==='updates'?'软件更新':'模型结果';$('nav-settings').classList.toggle('active',value==='settings');$('nav-import').classList.toggle('active',value==='import');$('nav-history').classList.toggle('active',value==='history');}
+function switchView(value){view=value;closeUpdates();for(const item of ['import','history','result','settings'])$(item+'-view').classList.toggle('hidden',item!==value);$('location').textContent=value==='import'?'新建分析':value==='history'?'分析历史':value==='settings'?'模型设置':'模型结果';$('nav-settings').classList.toggle('active',value==='settings');$('nav-import').classList.toggle('active',value==='import');$('nav-history').classList.toggle('active',value==='history');}
 function setBusy(){const blocked=Boolean(state.running)||loading;$('start').disabled=blocked||!state.user||!$('consent').checked||(mode==='local'?!selected:!$('url').value.trim());$('login').disabled=blocked;$('logout').disabled=blocked;}
 async function refresh(){state=await api.state();$('account-name').textContent=state.user?.displayName||'尚未登录';$('login').classList.toggle('hidden',!!state.user);$('logout').classList.toggle('hidden',!state.user);$('devices').classList.toggle('hidden',!state.user);if(state.authError)notice(state.authError);renderTasks();setBusy();}
 const statusNames={preparing:'准备中',uploading:'上传中',analyzing:'分析中',queued:'等待分析',processing:'处理中',completed:'已完成',failed:'失败',paused:'已暂停'};
@@ -56,8 +56,29 @@ $('clear-settings').onclick=()=>perform(async()=>{await api.modelClear();setting
 $('summarize').onclick=()=>perform(async()=>{const id=resultId;$('summarize').disabled=true;$('summarize').textContent='正在生成总结…';try{const value=await api.summarize(id);if(resultId===id)renderSummary(value);notice('总结已生成并保存在本机');}finally{$('summarize').disabled=false;$('summarize').textContent='生成总结';}});
 $('export-summary').onclick=()=>perform(async()=>notice(await api.summaryExport(resultId)));
 
-function renderUpdate(value){$('app-version').textContent='镜探 '+value.currentVersion;const messages={idle:'自动检查更新已开启',checking:'正在检查更新…',current:'已是最新版本',downloading:`正在下载 ${value.version||''} · ${value.percent||0}%`,ready:`${value.version} 已下载，可以重启安装`,error:value.error,disabled:'开发模式不检查更新'};$('update-status').textContent=messages[value.status]||'';$('check-update').disabled=['checking','downloading','ready','disabled'].includes(value.status);$('install-update').classList.toggle('hidden',value.status!=='ready');$('update-progress').classList.toggle('hidden',value.status!=='downloading');$('update-progress').value=value.percent||0;$('nav-updates').textContent=value.status==='ready'?'软件更新 · 可安装':'软件更新';}
-$('nav-updates').onclick=()=>perform(async()=>{switchView('updates');renderUpdate(await api.updateState());});
+function renderUpdate(value){
+  $('app-version').textContent='镜探 '+value.currentVersion;
+  $('sidebar-version').textContent='v'+value.currentVersion;
+  const messages={idle:'自动检查更新已开启',checking:'正在检查更新…',current:'已是最新版本',downloading:`正在下载 ${value.version||''} · ${value.percent||0}%`,ready:`${value.version} 已下载，可以重启安装`,error:value.error||'更新失败，请重试',disabled:'开发模式不检查更新'};
+  $('update-status').textContent=messages[value.status]||'';
+  $('check-update').disabled=['checking','downloading','ready','disabled'].includes(value.status);
+  $('install-update').classList.toggle('hidden',value.status!=='ready');
+  $('update-progress').classList.toggle('hidden',value.status!=='downloading');
+  $('update-progress').value=value.percent||0;
+  const label=['checking','downloading','ready','error'].includes(value.status)?messages[value.status]:'检查更新';
+  $('nav-updates').title=label;$('nav-updates').setAttribute('aria-label',label);
+  $('nav-updates').dataset.status=value.status;
+  $('update-dot').classList.toggle('hidden',!['ready','error'].includes(value.status));
+}
+function closeUpdates(restoreFocus=false){$('update-panel').classList.add('hidden');$('nav-updates').setAttribute('aria-expanded','false');if(restoreFocus)$('nav-updates').focus();}
+$('nav-updates').onclick=()=>perform(async()=>{
+  if(!$('update-panel').classList.contains('hidden')){closeUpdates();return;}
+  $('update-panel').classList.remove('hidden');$('nav-updates').setAttribute('aria-expanded','true');$('close-updates').focus();
+  renderUpdate(await api.updateState());
+});
+$('close-updates').onclick=()=>closeUpdates(true);
+document.addEventListener('pointerdown',event=>{if(!$('update-panel').contains(event.target)&&!$('nav-updates').contains(event.target))closeUpdates();});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('update-panel').classList.contains('hidden')){event.preventDefault();closeUpdates(true);}});
 $('check-update').onclick=()=>perform(async()=>renderUpdate(await api.updateCheck()));
 $('install-update').onclick=()=>perform(()=>api.updateInstall());
 void perform(async()=>renderUpdate(await api.updateState()));

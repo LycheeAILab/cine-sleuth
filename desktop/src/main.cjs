@@ -1,4 +1,4 @@
-const {app,BrowserWindow,ipcMain,dialog,shell,safeStorage} = require('electron');
+const {app,BrowserWindow,ipcMain,dialog,shell,safeStorage,nativeTheme} = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
@@ -108,7 +108,8 @@ else {
       if(!choice.canceled){await fs.writeFile(choice.filePath,JSON.stringify(value,null,2));return '模型结果已导出';}
       return '已取消导出';
     });
-    win=new BrowserWindow({width:1220,height:840,minWidth:980,minHeight:680,backgroundColor:'#111416',title:'镜探 · CineSleuth',
+    nativeTheme.themeSource='light';
+    win=new BrowserWindow({width:1220,height:840,minWidth:980,minHeight:680,backgroundColor:'#f5f7fb',title:'镜探 · CineSleuth',
       webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
     win.removeMenu();win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
     win.webContents.on('will-navigate',(event,url)=>{if(url!==page)event.preventDefault();});
