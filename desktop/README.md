@@ -1,16 +1,16 @@
-# 镜探 Windows 桌面端 · 2.0.0
+# 镜探 Windows 桌面端 · 2.0.1
 
-## 下一版本：2.0.1（本地待发布）
+## 2.0.1 · 2026-09-08
 
 - 模型设置按用户指定内置 GLM 5.3、DeepSeek V4 Flash、DeepSeek V4 Pro、Kimi K2.6、MiniMax M2.5，无需 Key 即可浏览与选择；实际总结仍需用户硅基流动 Key。
 - 保留自定义模型 ID、旧模型配置；保存 Key 后可主动同步更多模型，同步不覆盖当前选择。不因选择模型自动生成或收费。
 - 目录按 2026-09-08 [官方模型中心](https://siliconflow.cn/models)、[硅基流动公告](https://docs.siliconflow.cn/docs/release-notes/overview) 与 [Kimi 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/vision) 核对。目录不承诺具体账户权限；MiniMax M2.5 按用户指定保留，但选择后明确显示平台计划于 2026-09-11 下线，发版前必须复核，不静默替换。
-- 桌面登录入口使用蓝色主按钮；配套 Lab `0.4.6-dev` 为桌面浏览器登录/注册/短信/授权页增加独立 CSS Module。不修改 Skill 授权页或官网通用登录样式。
-- 本地安装包 `release/CineSleuth-2.0.1-Windows-x64-Setup.exe`；当前正式 COS 更新源仍为 2.0.0，本地构建不等于已上线。
+- 桌面登录入口使用蓝色主按钮；配套 Lab `0.4.6-prod` 为桌面浏览器登录/注册/短信/授权页增加独立 CSS Module。不修改 Skill 授权页或官网通用登录样式。
+- 正式 COS 安装包、blockmap 与更新源已发布 2.0.1；真实 Electron 更新检测、下载与 SHA-512 校验通过，测试未启动安装器。官网与 GitHub 下载入口同步更新。
 
 ## 当前已发布版本
 
-本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.0`，与 Skill `v2.0.0` 独立。
+本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.1`，与 Skill `v2.0.0` 独立。
 
 本阶段实现：Lab 浏览器授权 → 本地视频或抖音链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史 → JSON 导出。支持用户手动调用硅基流动生成并导出跨段总结；用户 Agent、分镜首帧及云端最终报告归档未接入。
 
@@ -18,13 +18,13 @@
 
 ## 使用
 
-1. 运行 [Windows x64 2.0.0 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.0-Windows-x64-Setup.exe) 安装。
+1. 运行 [Windows x64 2.0.1 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.1-Windows-x64-Setup.exe) 安装。
 2. 点击“登录 LycheeAILab”，在系统浏览器登录并授权，返回桌面端。
 3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音分享链接。确认云端上传后开始分析。
 4. 查看本机进度及模型结果。失败或重启后点击“继续”，已完成的云端片段会跳过。暂停本地流程不会取消已经提交到 Lab 的模型请求。
 5. “分析历史”读取当前 Lab 账号的 CineSleuth 任务；“导出 JSON”保存原始模型结果。
 
-2026-09-08，配套 Lab `0.4.4-prod`（`ad1ee7b`）已部署正式环境，可使用正式站点登录。
+2026-09-08，配套 Lab `0.4.6-prod`（`d6ec6ca`）已部署正式环境，可使用正式站点登录；此次仅更新 Web，不改 API、数据库或登录凭据。
 
 ## 构建
 
@@ -68,7 +68,7 @@ Electron 用户数据目录中，`desktop-session.enc` 用 Windows DPAPI 加密�
 
 2026-09-08 已使用临时测试账号完成正式 Lab 浏览器密码登录、PKCE 授权、刷新及设备撤销；使用一段 4 秒自制视频，经过安装包内同版媒体运行环境，完成真实 COS 上传、Lab 模型分析及云端结果保存。生产 MySQL 实测授权码并发一次消费、刷新重放撤销、设备归属及个人 API Key 不受影响；测试账号、任务和 COS 对象均已清理。抖音取片沿用现有两级下载器，尚未用真实抖音链接实测。
 
-当前 2.0.0 安装包未配置代码签名，Windows 可能提示发布者未验证。原生启动、模拟业务流程及真实更新下载校验不等同于干净 Windows 覆盖安装；签名、干净 Windows 安装升级及第三方对应源代码交付完整性仍需补充核对。下方 0.2.x 内容为历史发布记录。
+当前 2.0.1 安装包未配置代码签名，Windows 可能提示发布者未验证。原生启动、模拟业务流程及真实更新下载校验不等同于干净 Windows 覆盖安装；签名、干净 Windows 安装升级及第三方对应源代码交付完整性仍需补充核对。下方 0.2.x 内容为历史发布记录。
 
 第三方取片代码及其许可证随安装包保留，见仓库 `THIRD_PARTY_NOTICES.md`。FFmpeg 及 Python 依赖许可随运行环境交付。使用的 OAuth 登录设计依据 [RFC 8252](https://www.rfc-editor.org/info/rfc8252/) 和 [RFC 9700](https://www.rfc-editor.org/info/rfc9700/)。
 
