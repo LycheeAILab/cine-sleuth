@@ -1,7 +1,7 @@
 {
   "name": "cine-sleuth-desktop",
   "productName": "CineSleuth",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "镜探 · LycheeAILab 视频模型分析客户端",
   "author": "LycheeAILab",
   "license": "MIT",
@@ -74,6 +74,16 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/",
+        "useMultipleRangeRequest": false
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "6.8.3"
   }
 }

@@ -5,6 +5,8 @@ const os = require('node:os');
 const {pathToFileURL} = require('node:url');
 const {LabClient} = require('./lab-client.cjs');
 const {SCHEME,labOrigin,beginLogin,acceptCallback} = require('./auth.cjs');
+const {Updates}=require('./updates.cjs');
+const {autoUpdater}=require('electron-updater');
 const {ModelSettings}=require('./model-settings.cjs');
 const {AnalysisPipeline} = require('./pipeline.cjs');
 const base=labOrigin(process.env.CINESLEUTH_LAB_URL,app.isPackaged);
@@ -56,6 +58,12 @@ else {
       if(event.sender!==win.webContents||event.senderFrame?.url!==page)throw Error('请求来源无效');
       try{return {ok:true,value:await fn(...args)};}catch(error){return {ok:false,message:error.message};}
     });}
+    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||authenticating});
+    updates.on('state',state=>notify({type:'update',state}));
+    handle('updateState',()=>updates.state);
+    handle('updateCheck',()=>updates.check());
+    handle('updateInstall',()=>updates.install());
+    app.on('before-quit',()=>updates.stop());
     handle('state',async()=>{
       let authError=null;
       if(client.tokens){try{await currentUser();}catch(error){authError=error.message;if(error.status===401)user=null;}}
@@ -114,6 +122,7 @@ else {
         .then(async choice=>{if(choice.response===1){await engine.pause();closing=true;win.close();}});
     });
     await win.loadFile(path.join(__dirname,'index.html'));
+    updates.start();
     const callback=process.argv.find(arg=>arg.startsWith(`${SCHEME}:`));if(callback)void handleCallback(callback);
   }).catch(error=>{dialog.showErrorBox('镜探启动失败',error.message);app.quit();});
 }

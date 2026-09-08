@@ -1,4 +1,4 @@
-# 镜探 Windows 桌面端 · 0.2.0 Preview
+# 镜探 Windows 桌面端 · 0.2.1 Preview
 
 本阶段实现：Lab 浏览器授权 → 本地视频或抖音链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史 → JSON 导出。支持用户手动调用硅基流动生成并导出跨段总结；用户 Agent、分镜首帧及云端最终报告归档未接入。
 
@@ -6,7 +6,7 @@
 
 ## 使用
 
-1. 配套 Lab 更新部署完成后，运行 `release/CineSleuth-0.2.0-Windows-x64-Setup.exe` 安装。
+1. 配套 Lab 更新部署完成后，运行 `release/CineSleuth-0.2.1-Windows-x64-Setup.exe` 安装。
 2. 点击“登录 LycheeAILab”，在系统浏览器登录并授权，返回桌面端。
 3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音分享链接。确认云端上传后开始分析。
 4. 查看本机进度及模型结果。失败或重启后点击“继续”，已完成的云端片段会跳过。暂停本地流程不会取消已经提交到 Lab 的模型请求。
@@ -67,3 +67,13 @@ Electron 用户数据目录中，`desktop-session.enc` 用 Windows DPAPI 加密�
 已完成的任务可点击“生成总结”，仅将云端分析证据发送至 https://api.siliconflow.cn/v1/chat/completions；由用户硅基流动账户结算，无自动重试，不发送原视频。总结保存在 `summaries/<userId>/<jobId>.json`，支持 Markdown 导出，不改变 Lab 任务或报告归档状态。证据超过 180KB 时明确拒绝，不静默截断；模型上下文不足等错误需要用户自行选择其他模型。接口依据硅基流动官方 Chat Completions 文档。
 
 本版通过 6 项桌面单测、模拟总结和设置界面检查、原生 Electron 启动检查；正式登录页面在 1440/1366/1280/390 宽度通过切换和溢出检查。未使用真实硅基流动 Key 发起付费总结。安装包仍未签名。
+
+## 0.2.1 COS 自动更新
+
+安装本版一次后，启动 10 秒检查更新，运行期间每 4 小时检查；左下角“软件更新”支持手动检查。新版自动下载，经 electron-updater 的 SHA-512 校验后显示“重启安装”，仅在用户点击且分析/总结/登录操作空闲时调用 NSIS 更新。退出应用不会自动安装；不允许降级。登录、Key 和任务目录使用原有 userData，安装更新不删除数据。
+
+更新地址：`https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/`。仅安装包、blockmap、latest.yml 对象公开读取；桶权限及其他业务文件不改。无需向客户端下发 COS 凭据。latest.yml 禁止缓存，带版本的安装包长期缓存。当前为 unsigned Preview，HTTPS + SHA-512 提供传输及完整性校验，尚无 Authenticode 发布者验证。
+
+发布：提高 desktop/package.json 和 lock 版本，运行单测/UI 检查，`npm run dist -- --publish never`，再运行 `scripts/publish-cos.py`。此脚本通过环境变量 `CINE_LAB_CONNECTION_DIR` 指向工作站外部的 lab_connection.py（connect/run），使用已有 SSH 和 Lab API 容器环境中的 COS 权限；临时 PUT URL 仅留在发布进程内。先上传不可覆盖的版本安装包与 blockmap，完整读取公网安装包校验 SHA-512，再最后上传 latest.yml。脚本不会改变桶 ACL，也不会上传源码、凭据或用户数据。已有版本号禁止覆盖；发布修复时递增版本。
+
+验收：8 项单测、1220/980 UI、原生 Electron 启动通过；`tests/update-live.cjs` 用真实 Electron/COS 模拟旧版发现、下载并校验 0.2.1 成功，不启动安装器。实际覆盖安装、重启后数据保留尚未在干净 Windows 上端到端验证。0.2.0 不含更新器，必须先手动安装 0.2.1。
