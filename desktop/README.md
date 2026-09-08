@@ -1,5 +1,15 @@
 # 镜探 Windows 桌面端 · 2.0.0
 
+## 下一版本：2.0.1（本地待发布）
+
+- 模型设置内置 DeepSeek V4 Flash、DeepSeek V3.2、Kimi K2.6、GLM 5.1，无需 Key 即可浏览与选择；实际总结仍需用户硅基流动 Key。
+- 保留自定义模型 ID、旧模型配置；保存 Key 后可主动同步更多模型，同步不覆盖当前选择。不因选择模型自动生成或收费。
+- 目录按 2026-09-08 [硅基流动公告](https://docs.siliconflow.cn/docs/release-notes/overview)、[GLM 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/stream-mode) 与 [Kimi 示例](https://docs.siliconflow.cn/docs/userguide/capabilities/vision) 核对。目录不承诺具体账户权限；禁止加入已宣布即将下线的模型，发版前复核。
+- 桌面登录入口使用蓝色主按钮；配套 Lab `0.4.6-dev` 为桌面浏览器登录/注册/短信/授权页增加独立 CSS Module。不修改 Skill 授权页或官网通用登录样式。
+- 本地安装包 `release/CineSleuth-2.0.1-Windows-x64-Setup.exe`；当前正式 COS 更新源仍为 2.0.0，本地构建不等于已上线。
+
+## 当前已发布版本
+
 本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.0`，与 Skill `v2.0.0` 独立。
 
 本阶段实现：Lab 浏览器授权 → 本地视频或抖音链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史 → JSON 导出。支持用户手动调用硅基流动生成并导出跨段总结；用户 Agent、分镜首帧及云端最终报告归档未接入。

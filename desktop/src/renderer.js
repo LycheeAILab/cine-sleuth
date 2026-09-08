@@ -48,10 +48,28 @@ api.onEvent(event=>{if(event.type==='update')renderUpdate(event.state);else if(e
 void perform(()=>refresh());
 
 function renderSummary(value){$('summary').textContent=value?`${value.model} · ${new Date(value.createdAt).toLocaleString('zh-CN')}\n\n${value.text}`:'';$('summary').classList.toggle('hidden',!value);$('export-summary').classList.toggle('hidden',!value);}
-function settingsStatus(value){$('model-key').value='';$('key-status').textContent=value.configured?'已保存 Key；留空可保留原 Key':'尚未配置';$('model-id').value=value.model||'';}
-$('nav-settings').onclick=()=>perform(async()=>{switchView('settings');$('model-key').value='';$('model-id').value='';$('key-status').textContent='尚未配置';if(!state.user){notice('请先登录 Lab');return;}settingsStatus(await api.modelStatus());});
-$('save-settings').onclick=()=>perform(async()=>{settingsStatus(await api.modelSave({key:$('model-key').value,model:$('model-id').value}));notice('模型设置已保存');});
-$('load-models').onclick=()=>perform(async()=>{const button=$('load-models');button.disabled=true;try{const items=await api.modelList();$('models').replaceChildren(...items.map(id=>{const option=element('option');option.value=id;return option;}));notice(`已获取 ${items.length} 个模型，点击模型输入框选择`);}finally{button.disabled=false;}});
+const presetModels=window.cineModelCatalog;
+let extraModels=[];
+function selectedModel(){return $('model-preset').value==='custom'?$('model-id').value.trim():$('model-preset').value;}
+function selectModel(id){
+ const known=Array.from($('model-preset').options).some(option=>option.value===id&&id!=='custom');
+ $('model-preset').value=known?id:'custom';$('model-id').value=id;
+ $('custom-model').classList.toggle('hidden',known);
+ for(const card of $('model-cards').children)card.setAttribute('aria-pressed',String(card.dataset.model===id));
+}
+function renderModelChoices(id=presetModels[0].id){
+ const options=presetModels.map(model=>{const option=element('option',model.name);option.value=model.id;return option;});
+ for(const model of extraModels)if(!presetModels.some(item=>item.id===model)){const option=element('option',model);option.value=model;options.push(option);}
+ const custom=element('option','其他 / 自定义模型');custom.value='custom';options.push(custom);$('model-preset').replaceChildren(...options);
+ selectModel(id);
+}
+for(const model of presetModels){const card=element('button',undefined,'model-card');card.type='button';card.dataset.model=model.id;card.append(element('strong',model.name),element('small',model.family));card.onclick=()=>selectModel(model.id);$('model-cards').append(card);}
+renderModelChoices();
+$('model-preset').onchange=()=>selectModel($('model-preset').value==='custom'?'':$('model-preset').value);
+function settingsStatus(value){$('model-key').value='';$('key-status').textContent=value.configured?'已保存 Key；留空可保留原 Key':'尚未配置 Key';$('load-models').disabled=!value.configured;$('load-models').title=value.configured?'同步当前账户可用的更多模型':'保存 Key 后可同步更多模型；常用模型已可直接选择';selectModel(value.model||presetModels[0].id);}
+$('nav-settings').onclick=()=>perform(async()=>{switchView('settings');extraModels=[];renderModelChoices();settingsStatus({});if(!state.user){notice('可先选择常用模型，登录 Lab 后保存配置。');return;}settingsStatus(await api.modelStatus());});
+$('save-settings').onclick=()=>perform(async()=>{if(!state.user)throw Error('请先登录 Lab 再保存模型设置');settingsStatus(await api.modelSave({key:$('model-key').value,model:selectedModel()}));notice('模型设置已保存');});
+$('load-models').onclick=()=>perform(async()=>{const button=$('load-models');button.disabled=true;try{const items=await api.modelList();const current=selectedModel();extraModels=[...new Set(items)];renderModelChoices(current);notice(`已同步 ${items.length} 个模型，当前选择已保留。`);}finally{button.disabled=false;}});
 $('clear-settings').onclick=()=>perform(async()=>{await api.modelClear();settingsStatus({});notice('模型配置已删除');});
 $('summarize').onclick=()=>perform(async()=>{const id=resultId;$('summarize').disabled=true;$('summarize').textContent='正在生成总结…';try{const value=await api.summarize(id);if(resultId===id)renderSummary(value);notice('总结已生成并保存在本机');}finally{$('summarize').disabled=false;$('summarize').textContent='生成总结';}});
 $('export-summary').onclick=()=>perform(async()=>notice(await api.summaryExport(resultId)));
