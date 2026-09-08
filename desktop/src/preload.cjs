@@ -1,5 +1,5 @@
 const {contextBridge,ipcRenderer} = require('electron');
-const methods=['state','login','logout','devices','select','start','resume','pause','history','results','export','modelStatus','modelSave','modelClear','modelList','summaryRead','summarize','summaryExport','updateState','updateCheck','updateInstall'];
+const methods=['state','login','logout','devices','select','start','resume','pause','history','results','export','modelStatus','modelSave','modelClear','modelList','summaryRead','summarize','summaryExport','reportRead','reportGenerate','reportOpen','reportExport','updateState','updateCheck','updateInstall'];
 const api=Object.fromEntries(methods.map(method=>[method,async(...args)=>{
   const result=await ipcRenderer.invoke('cine:'+method,...args);
   if(!result.ok)throw Error(result.message);return result.value;

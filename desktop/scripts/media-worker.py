@@ -25,6 +25,7 @@ if SOURCE.exists():
 
 import prepare_video
 import prepare_video_source
+import build_visual_report
 
 
 def direct(url, output):
@@ -44,6 +45,10 @@ def main():
         print(json.dumps(download.run(sys.argv[2], Path(sys.argv[3]), 30)))
         return
     request = json.load(sys.stdin)
+    if request.get("action") == "visual-report":
+        result = build_visual_report.build(Path(request["video"]), Path(request["segments"]), Path(request["report"]), Path(request["outputDir"]))
+        print(json.dumps(result, ensure_ascii=False))
+        return
     output = Path(request["outputDir"]).resolve()
     output.mkdir(parents=True, exist_ok=True)
     prepare_video_source.download_with_douk_direct = direct

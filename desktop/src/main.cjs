@@ -8,14 +8,15 @@ const {SCHEME,labOrigin,beginLogin,acceptCallback} = require('./auth.cjs');
 const {Updates}=require('./updates.cjs');
 const {autoUpdater}=require('electron-updater');
 const {ModelSettings}=require('./model-settings.cjs');
+const {VisualReports}=require('./visual-report.cjs');
 const {AnalysisPipeline} = require('./pipeline.cjs');
 const base=labOrigin(process.env.CINESLEUTH_LAB_URL,app.isPackaged);
 const page=pathToFileURL(path.join(__dirname,'index.html')).href;
-let win,client,engine,models,pending,user,authenticating=false,selectedVideo=null;
+let win,client,engine,models,reports,pending,user,authenticating=false,selectedVideo=null;
 const notify=payload=>{if(win&&!win.isDestroyed())win.webContents.send('cine:event',payload);};
 async function handleCallback(value) {
   try {
-    if(!client||engine?.running||models?.busy||authenticating)throw Error('请先结束当前操作，再重新登录');
+    if(!client||engine?.running||models?.busy||reports?.busy||authenticating)throw Error('请先结束当前操作，再重新登录');
     const input=acceptCallback(value,pending);pending=null;authenticating=true;
     await client.exchange(input);user=(await client.api('/api/desktop-auth/me')).user;
     selectedVideo=null;notify({type:'auth',user});
@@ -50,15 +51,19 @@ else {
     const runtime=app.isPackaged?path.join(process.resourcesPath,'runtime'):path.resolve(__dirname,'../runtime');
     engine=new AnalysisPipeline({client,root:path.join(root,'tasks'),runtime,
       promptFile:app.isPackaged?path.join(process.resourcesPath,'segment-prompt.md'):path.resolve(__dirname,'../../plugins/cine-sleuth/skills/cine-sleuth/references/multimodal-segment-prompt.md'),notify});
+    reports=new VisualReports({root:path.join(root,'reports'),engine,models,runtime,notify,chooseVideo:async()=>{
+      const choice=await dialog.showOpenDialog(win,{title:'原视频已移动，请重新选择同一原片',properties:['openFile'],filters:[{name:'视频',extensions:['mp4','mov','webm','mkv','m4v']}]});
+      return choice.canceled?null:choice.filePaths[0];
+    }});
     if(app.isPackaged)app.setAsDefaultProtocolClient(SCHEME);
     else app.setAsDefaultProtocolClient(SCHEME,process.execPath,[path.resolve(__dirname,'..')]);
     async function currentUser(){user=(await client.api('/api/desktop-auth/me')).user;return user;}
-    function idle(){if(engine.running||authenticating||models.busy)throw Error('请先暂停当前任务，再操作登录');}
+    function idle(){if(engine.running||authenticating||models.busy||reports.busy)throw Error('请先完成或暂停当前操作');}
     function handle(name,fn){ipcMain.handle('cine:'+name,async(event,...args)=>{
       if(event.sender!==win.webContents||event.senderFrame?.url!==page)throw Error('请求来源无效');
       try{return {ok:true,value:await fn(...args)};}catch(error){return {ok:false,message:error.message};}
     });}
-    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||authenticating});
+    const updates=new Updates({updater:autoUpdater,version:app.getVersion(),enabled:app.isPackaged,busy:()=>!!engine.running||models.busy||reports.busy||authenticating});
     updates.on('state',state=>notify({type:'update',state}));
     handle('updateState',()=>updates.state);
     handle('updateCheck',()=>updates.check());
@@ -79,6 +84,7 @@ else {
       return {name:path.basename(selectedVideo),sizeBytes:(await fs.stat(selectedVideo)).size};
     });
     handle('start',async(input)=>{
+      idle();
       if(!input||input.consent!==true)throw Error('请确认片源授权及云端上传');
       if(input.mode==='local'&&!selectedVideo)throw Error('请先选择视频');
       if(!['local','link'].includes(input.mode))throw Error('导入方式无效');
@@ -86,7 +92,7 @@ else {
       if(source.url!==undefined&&(!source.url||source.url.length>4000))throw Error('请输入有效分享链接');
       return engine.start(await currentUser(),source);
     });
-    handle('resume',async(id)=>engine.resume(await currentUser(),id));
+    handle('resume',async(id)=>{idle();return engine.resume(await currentUser(),id);});
     handle('pause',()=>engine.pause());
     handle('history',async(before)=>{
       await currentUser();if(before&&!/^[a-f0-9-]{36}$/.test(before))throw Error('分页参数无效');
@@ -94,6 +100,10 @@ else {
     });
     async function results(id){await currentUser();if(!/^[a-f0-9-]{36}$/.test(id))throw Error('任务编号无效');return client.api(`/api/cine-sleuth/jobs/${id}/model-results`);}
     handle('results',results);
+    handle('reportRead',async(id)=>{await results(id);return reports.read(user.id,id);});
+    handle('reportGenerate',async(id)=>{const data=await results(id);return reports.generate(user.id,id,data);});
+    handle('reportOpen',async(id)=>{await results(id);const file=await reports.file(user.id,id);const error=await shell.openPath(file);if(error)throw Error('无法打开报告，请导出 HTML 后使用浏览器打开');return '已打开离线 HTML 报告';});
+    handle('reportExport',async(id)=>{await results(id);const file=await reports.file(user.id,id);const choice=await dialog.showSaveDialog(win,{title:'导出图文拉片报告',defaultPath:`CineSleuth-${id}.html`,filters:[{name:'离线 HTML（含首帧图片）',extensions:['html']}]});if(choice.canceled)return '已取消导出';await fs.copyFile(file,choice.filePath);return 'HTML 已导出，图片已内嵌，可离线打开';});
     handle('modelStatus',async()=>models.status((await currentUser()).id));
     handle('modelSave',async(input)=>models.save((await currentUser()).id,input));
     handle('modelClear',async()=>models.clear((await currentUser()).id));
@@ -116,7 +126,7 @@ else {
     win.webContents.session.setPermissionRequestHandler((_,__,callback)=>callback(false));
     let closing=false;
     win.on('close',event=>{
-      if(models.busy&&!closing){event.preventDefault();notify({type:'error',message:'正在生成总结，请等待完成后退出'});return;}
+      if((models.busy||reports.busy)&&!closing){event.preventDefault();notify({type:'error',message:'正在生成报告，请等待完成后退出'});return;}
       if(!engine.running||closing)return;
       event.preventDefault();
       void dialog.showMessageBox(win,{type:'question',message:'任务正在处理中',detail:'退出将暂停本地流程。已提交到 Lab 的模型分析可能继续完成，可稍后恢复。',buttons:['继续处理','暂停并退出'],defaultId:0,cancelId:0})

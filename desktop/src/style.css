@@ -108,6 +108,13 @@ progress::-webkit-progress-value{background:var(--blue)}
 .hint{font-size:12px;color:#8390a3}
 .settings-actions,.summary-actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}
 .summary-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;margin:20px 0;color:#435773;line-height:1.85}
+.report-panel{margin-top:26px;padding:24px;background:linear-gradient(125deg,#fff,#f0f5ff);border:1px solid #d9e5f8;border-radius:16px}
+.report-intro{display:flex;align-items:flex-start;gap:14px;min-width:0}
+.report-intro h2{margin:0;font-size:18px;color:var(--ink)}
+.report-intro p{font-size:14px;line-height:1.7;color:#6d7888;margin:8px 0 0}
+.report-symbol{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#e3edff;color:#2d68ff;font-size:24px}
+.report-panel .summary-actions{margin:20px 0 12px}
+.report-status{font-size:13px;color:#41649b;overflow-wrap:anywhere;line-height:1.6}
 @media(max-width:1100px){:root{--sidebar-width:190px}.sidebar{padding:26px 14px 16px}.desktop-main{padding-left:28px;padding-right:28px}.import-panel{padding:22px}.task-row{gap:10px}.task-actions{flex-wrap:wrap;max-width:170px}}
 @media(max-height:720px){.sidebar{padding-top:22px}.desktop-topbar{min-height:60px;margin-bottom:24px}.source-box{min-height:210px;padding:22px 12px}.desktop-main h1{margin-bottom:18px}.section-heading{margin-top:22px}}
 @media(prefers-reduced-motion:reduce){button{transition:none}.update-toggle[data-status="checking"] .icon{animation:none}}

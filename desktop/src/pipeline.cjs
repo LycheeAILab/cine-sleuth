@@ -138,4 +138,4 @@ class AnalysisPipeline {
     task.status='completed';task.stage='模型分析完成，结果已保存到 Lab';await this.update(task);
   }
 }
-module.exports={AnalysisPipeline,saveJson,renderPrompt,hashFile,uploadTarget};
+module.exports={AnalysisPipeline,saveJson,renderPrompt,hashFile,uploadTarget,prepareMedia};

@@ -9,9 +9,9 @@ if (-not (Test-Path (Join-Path $buildRoot 'venv/Scripts/python.exe'))) {
   if ($LASTEXITCODE -ne 0) { throw 'Cannot create Python build environment' }
 }
 $buildPython = Join-Path $buildRoot 'venv/Scripts/python.exe'
-& $buildPython -m pip install 'pyinstaller==6.16.0' 'requests==2.32.5' 'yt-dlp==2026.8.19'
+& $buildPython -m pip install 'pyinstaller==6.16.0' 'requests==2.32.5' 'yt-dlp==2026.8.19' 'Markdown==3.8.2'
 if ($LASTEXITCODE -ne 0) { throw 'Cannot install runtime build dependencies' }
-& $buildPython -m PyInstaller --noconfirm --clean --onedir --name cine-media --distpath $runtimeRoot --workpath (Join-Path $buildRoot 'pyinstaller') --specpath $buildRoot --paths $skillScripts --paths (Join-Path $skillScripts 'douk_downloader') --hidden-import download --hidden-import a_bogus --collect-all yt_dlp --exclude-module torch --exclude-module torchaudio --exclude-module silero_vad (Join-Path $PSScriptRoot 'media-worker.py')
+& $buildPython -m PyInstaller --noconfirm --clean --onedir --name cine-media --distpath $runtimeRoot --workpath (Join-Path $buildRoot 'pyinstaller') --specpath $buildRoot --paths $skillScripts --paths (Join-Path $skillScripts 'douk_downloader') --hidden-import download --hidden-import a_bogus --collect-all markdown --collect-all yt_dlp --exclude-module torch --exclude-module torchaudio --exclude-module silero_vad (Join-Path $PSScriptRoot 'media-worker.py')
 if ($LASTEXITCODE -ne 0) { throw 'Cannot package media worker' }
 & (Join-Path $PSScriptRoot 'update-ffmpeg.ps1')
 & $buildPython -m pip freeze | Set-Content (Join-Path $runtimeRoot 'python-packages.txt') -Encoding utf8

@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id);
 const api=window.cine;
-let state={tasks:[],user:null},mode='local',selected=false,view='import',previousView='import',resultId=null,nextCursor=null,loading=false;
+let state={tasks:[],user:null},mode='local',selected=false,view='import',previousView='import',resultId=null,nextCursor=null,loading=false,resultComplete=false;
 function notice(text){$('notice').textContent=text||'';$('notice').classList.toggle('hidden',!text);}
 async function perform(fn){try{return await fn();}catch(error){notice(error.message);}}
 function element(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
@@ -24,7 +24,7 @@ function renderTasks(){const list=$('tasks');list.replaceChildren();if(!state.ta
 async function history(more=false){const body=await api.history(more?nextCursor:null);if(!more)$('history').replaceChildren();for(const task of body.jobs)$('history').append(taskRow(task,false));if(!more&&!body.jobs.length)$('history').append(element('div','当前账户暂无云端任务。','empty'));nextCursor=body.nextCursor;$('more').classList.toggle('hidden',!nextCursor);}
 function evidence(raw){if(raw?.candidates){const text=(raw.candidates[0]?.content?.parts||[]).map(p=>p.text||'').join('\n').replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');try{return JSON.parse(text);}catch{return raw;}}return raw;}
 const labels={media_fingerprint:'画面识别',chunk:'片段信息',transcript:'台词与字幕',shots:'镜头证据',scenes:'场景',audio:'声音',audio_events:'声音事件',uncertainties:'不确定项',visual_segments:'视觉段落',sound_design:'声音设计',screen_text:'画面文字',narrative:'叙事结构'};
-async function showResult(id){const data=await api.results(id);resultId=id;previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren();$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');$('summarize').disabled=data.status!=='completed';const saved=await api.summaryRead(id);renderSummary(saved);
+async function showResult(id){const data=await api.results(id);resultId=id;resultComplete=data.status==='completed';previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren();$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');$('summarize').disabled=!resultComplete||reportBusy;$('generate-report').disabled=!resultComplete||reportBusy;renderReport(null);const saved=await api.summaryRead(id);if(resultId!==id)return;renderSummary(saved);if(api.reportRead){const report=await api.reportRead(id);if(resultId!==id)return;renderReport(report);}
   if(!data.chunks.length)$('result').append(element('div','还没有模型结果。可以返回任务继续分析。','empty'));
   for(const chunk of data.chunks){const card=element('article',undefined,'result-chunk');card.append(element('h2',`${chunk.chunkKey} · ${statusNames[chunk.status]||chunk.status}`));
     const value=evidence(chunk.result);if(!value)card.append(element('p',chunk.errorMessage||'此片段尚未完成','observation'));
@@ -42,12 +42,26 @@ $('start').onclick=()=>perform(async()=>{loading=true;setBusy();notice('');try{a
 $('nav-import').onclick=()=>switchView('import');$('nav-history').onclick=()=>perform(async()=>{switchView('history');await history();});
 $('refresh-history').onclick=()=>perform(()=>history());$('more').onclick=()=>perform(()=>history(true));$('back').onclick=()=>switchView(previousView);
 $('export').onclick=()=>perform(async()=>notice(await api.export(resultId)));
-api.onEvent(event=>{if(event.type==='update')renderUpdate(event.state);else if(event.type==='error')notice(event.message);else if(event.type==='auth'){notice('已登录 LycheeAILab');void perform(()=>refresh());}else if(event.type==='task'){
+api.onEvent(event=>{if(event.type==='report-progress'){if(event.id===resultId)$('report-status').textContent=event.message;}else if(event.type==='update')renderUpdate(event.state);else if(event.type==='error')notice(event.message);else if(event.type==='auth'){notice('已登录 LycheeAILab');void perform(()=>refresh());}else if(event.type==='task'){
   state.running=event.task.id;const index=state.tasks.findIndex(task=>task.id===event.task.id);if(index>=0)state.tasks[index]=event.task;else state.tasks.unshift(event.task);renderTasks();setBusy();
 }else if(event.type==='idle')void perform(()=>refresh());});
 void perform(()=>refresh());
 
 function renderSummary(value){$('summary').textContent=value?`${value.model} · ${new Date(value.createdAt).toLocaleString('zh-CN')}\n\n${value.text}`:'';$('summary').classList.toggle('hidden',!value);$('export-summary').classList.toggle('hidden',!value);}
+let reportBusy=false;
+function renderReport(value){
+  $('open-report').classList.toggle('hidden',!value);$('export-report').classList.toggle('hidden',!value);
+  $('generate-report').classList.toggle('hidden',!!value);
+  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'生成报告将整理完整镜头，并提取每个镜头的原片首帧。';
+}
+$('generate-report').onclick=()=>perform(async()=>{
+  const id=resultId;reportBusy=true;$('generate-report').disabled=true;$('summarize').disabled=true;notice('');
+  try{const value=await api.reportGenerate(id);if(resultId===id){renderReport(value);if(!value)$('report-status').textContent='已取消选择原片，没有发起报告生成';}if(value)notice('图文报告已生成，可打开或导出离线 HTML');}
+  catch(error){if(resultId===id)$('report-status').textContent=error.message;throw error;}
+  finally{reportBusy=false;$('generate-report').disabled=!resultComplete;$('summarize').disabled=!resultComplete;}
+});
+$('open-report').onclick=()=>perform(async()=>notice(await api.reportOpen(resultId)));
+$('export-report').onclick=()=>perform(async()=>notice(await api.reportExport(resultId)));
 const presetModels=window.cineModelCatalog;
 let extraModels=[];
 function selectedModel(){return $('model-preset').value==='custom'?$('model-id').value.trim():$('model-preset').value;}
