@@ -2,7 +2,7 @@
   "name": "cine-sleuth-desktop",
   "productName": "CineSleuth",
   "version": "2.0.6",
-  "description": "镜探 · LycheeAILab 视频模型分析客户端",
+  "description": "\u955c\u63a2 \u00b7 LycheeAILab \u89c6\u9891\u6a21\u578b\u5206\u6790\u5ba2\u6237\u7aef",
   "author": "LycheeAILab",
   "license": "MIT",
   "main": "src/main.cjs",
@@ -85,5 +85,31 @@
   },
   "dependencies": {
     "electron-updater": "6.8.3"
+  },
+  "overrides": {
+    "app-builder-lib": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "builder-util": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "builder-util-runtime": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "dmg-builder": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "electron-builder": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "electron-builder-squirrel-windows": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "electron-publish": {
+      "builder-util-runtime": "9.7.0"
+    },
+    "electron-updater": {
+      "builder-util-runtime": "9.7.0"
+    }
   }
 }
