@@ -31,6 +31,14 @@ class ModelSettings {
 
     }finally{this.busy=false;}
   }
+  async translateFastReport(user,report,options){
+    if(this.busy)throw Error('已有报告正在生成');this.busy=true;
+    try{
+      const config=await this.read(user);if(!config.model)throw Error('旧任务的证据为英文；请先在模型设置中选择并保存模型，或重新分析原片');
+      const {translateFastReport}=require('./fast-translation.cjs');
+      return {report:await translateFastReport(report,config,(selected,body,progress)=>this.call(selected,'chat/completions',body,progress),options),model:config.model};
+    }finally{this.busy=false;}
+  }
   async summarize(user,data,options){
     if(this.busy)throw Error('已有总结正在生成');this.busy=true;
     try{
