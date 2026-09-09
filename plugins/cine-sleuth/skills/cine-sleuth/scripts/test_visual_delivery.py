@@ -56,10 +56,16 @@ class VisualTests(unittest.TestCase):
             "-fps_mode", "vfr", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(cls.video)
         ], check=True, capture_output=True)
         cls.segments = cls.root / "segments.json"
+        def segment(identifier, start, end, color):
+            return {"id": identifier, "start_seconds": start, "end_seconds": end,
+                    "title": color + "镜头", "shot_size": "中景", "motion_effects": "固定镜头",
+                    "visuals": color + "画面", "dialogue_subtitle": "无", "bgm": "无",
+                    "sound_effects": "无", "on_screen_text": "无", "analysis": "色块测试",
+                    "video_generation_prompt": color + "色块，固定镜头"}
         cls.data = {"source_sha256": sha256_file(cls.video), "segments": [
-            {"id": "seg-001", "start_seconds": 0, "end_seconds": 1},
-            {"id": "seg-002", "start_seconds": 1, "end_seconds": 2},
-            {"id": "seg-003", "start_seconds": 2.01, "end_seconds": 2.7},
+            segment("seg-001", 0, 1, "红色"),
+            segment("seg-002", 1, 2, "绿色"),
+            segment("seg-003", 2.01, 2.7, "蓝色"),
         ]}
         cls.segments.write_text(json.dumps(cls.data), encoding="utf-8")
         cls.report = cls.root / "report-draft.md"
@@ -88,6 +94,10 @@ class VisualTests(unittest.TestCase):
         self.assertAlmostEqual(frames[-1]["frame_seconds"], 2.2, places=2)
         page = (out / "report.html").read_text(encoding="utf-8")
         self.assertEqual(page.count('src="data:image/jpeg;base64,'), 3)
+        self.assertIn('class="shot-table"', page)
+        for heading in ("帧", "时间", "景别", "运动特效", "画面", "口播字幕", "BGM", "音效", "画面花字"):
+            self.assertIn(heading, page)
+        self.assertIn("红色画面", page)
         self.assertNotIn('<script>', page)
         self.assertNotIn('{{frame:', page)
         self.assertNotIn('{{frame:', (out / "report-text.md").read_text(encoding="utf-8"))

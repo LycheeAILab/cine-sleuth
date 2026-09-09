@@ -1,6 +1,6 @@
 const {createHash}=require('node:crypto');
 const {REPORT_PROMPT,validateReport}=require('./visual-report.cjs');
-const VERSION=1, SHOTS_PER_BATCH=6, INPUT_BYTES=140000;
+const VERSION=2, SHOTS_PER_BATCH=6, INPUT_BYTES=140000;
 function subset(evidence,ids){
   const wanted=new Set(ids),shots=evidence.shots.filter(s=>wanted.has(s.evidence_id));
   const start=Math.min(...shots.map(s=>s.start_seconds)),end=Math.max(...shots.map(s=>s.end_seconds));

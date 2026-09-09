@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {batchedReport,plan}=require('../src/report-batches.cjs');
 function evidence(count=18){return {source:{duration_seconds:300},shots:Array.from({length:count},(_,i)=>({evidence_id:'shot-'+(i+1),start_seconds:i*.5,end_seconds:(i+1)*.5,visuals:'测试画面'})),transcript:[],scenes:[],audio:[],uncertainties:[]};}
-function report(part,long=false){return {title:'报告',overview:'测试概览',sections:[{title:'视觉',body:'测试画面'}],segments:part.shots.map(s=>({title:s.evidence_id,evidence_ids:[s.evidence_id],analysis:long?'画面'.repeat(500):'画面证据',video_generation_prompt:'测试提示词'})),uncertainties:'无'};}
+function report(part,long=false){return {title:'报告',overview:'测试概览',sections:[{title:'视觉',body:'测试画面'}],segments:part.shots.map(s=>({title:s.evidence_id,evidence_ids:[s.evidence_id],shot_size:'中景',motion_effects:'固定镜头',visuals:'测试画面',dialogue_subtitle:'无',bgm:'无',sound_effects:'无',on_screen_text:'无',analysis:long?'画面'.repeat(500):'画面证据',video_generation_prompt:'测试提示词'})),uncertainties:'无'};}
 function result(value,finish='stop'){return {choices:[{finish_reason:finish,message:{content:JSON.stringify(value)}}]};}
 function checkpoint(){let saved;return {read:async()=>structuredClone(saved),write:async value=>{saved=structuredClone(value);},get value(){return saved;}};}
 function respond(body,long=false){const input=JSON.parse(body.messages[1].content);return input.shots?result(report(input,long)):result({title:'完整概览',overview:'全片总结',sections:[],uncertainties:'无'});}

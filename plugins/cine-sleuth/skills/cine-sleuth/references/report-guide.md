@@ -20,7 +20,7 @@ Adapt depth to the user's request. A full 拉片 normally contains:
 1. Source facts: duration, aspect ratio, frame rate, language, and content type.
 2. Verbatim transcript with global timecodes and speaker labels.
 3. Physical scene list with time ranges, setting, characters, action, and sound.
-4. Shot table with time ranges, shot size, angle, movement, transition, visible text, narrative function, and one directly usable video-generation prompt for every shot.
+4. Shot table with first frame, time range, shot size, movement/effects, visual content, speech/subtitles, BGM, sound effects, on-screen text, narrative function, and one directly usable video-generation prompt for every shot. Use the structured `segments.json` fields defined in `visual-delivery.md`; the renderer produces the final HTML table.
 5. Content or rhetorical sections, explicitly distinguished from physical scenes.
 6. Narrative structure, pacing, visual system, sound design, and notable techniques.
 7. Uncertain or unreadable items.

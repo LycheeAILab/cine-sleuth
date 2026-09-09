@@ -10,7 +10,7 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-2.0.0-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.0.0)
+  [![Version](https://img.shields.io/badge/version-2.1.0-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.1.0)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
@@ -30,16 +30,17 @@
 
 - 使用现有 **LycheeAILab 账号**登录，无需手动复制 Lab API Key。
 - 支持本地视频、授权抖音链接、云端分析结果、历史记录和 JSON 导出。
-- 可自行配置硅基流动 Key，生成逐镜图文报告、视频生成提示词与每段原片首帧，导出图片内嵌的离线 HTML；保留文字总结与 Markdown 导出。需保留本机任务时间清单和原片，最终报告不会自动上传。
+- 可自行配置硅基流动 Key，生成参考专业拉片表的横向彩色 HTML：逐镜首帧、时间、景别、运动特效、画面、口播字幕、BGM、音效、画面花字及视频生成提示词一屏对照；图片内嵌、可离线打开，并保留完整文字总结与 Markdown 导出。需保留本机任务时间清单和原片，最终报告不会自动上传。
 - Lab 浅蓝白主题，左下角下载图标可查看更新进度；新版下载后点击“重启安装”。
 
 > Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.4`，功能范围见 [桌面说明](desktop/README.md)。
 
 ## ✨ 核心能力
 
-### 2.0.0 · 从链接到图文拉片
+### 2.1.0 · 专业表格式图文拉片
 
 - **链接取片**：直接提供有权使用的抖音分享链接，下载后进入原有分析流程，也继续支持上传本地视频。平台限制无法下载时可改用本地文件。
+- **逐镜彩色表格**：按首帧、时间、景别、运动特效、画面、口播字幕、BGM、音效、画面花字逐列对照，分析与视频生成提示词可展开查看。
 - **每个 seg 都有首帧**：按 Agent 最终划分的视觉段落，从原片准确提取第一帧，和该段分析、视频生成提示词一起展示；不是技术切片截图。
 - **便于阅读和分享**：交付图片内嵌的 `report.html`，以及 `report.md` + 图片目录。HTML 单文件离线可读。
 - **模型结果不变**：图文包装仅发生在 Agent 最终交付阶段，不增加模型调用，不改变 Lab 模型结果或任务完成规则；五分钟上限保持不变。
@@ -112,7 +113,7 @@ flowchart LR
 
 在 Codex 桌面端新建任务并发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.0.0/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.1.0/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
 
 #### 手动安装
 
@@ -129,9 +130,9 @@ codex plugin add cine-sleuth@cine-sleuth
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.0.0/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.0.0；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.1.0/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.1.0；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.0.0/cine-sleuth-workbuddy-2.0.0.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.1.0/cine-sleuth-workbuddy-2.1.0.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 

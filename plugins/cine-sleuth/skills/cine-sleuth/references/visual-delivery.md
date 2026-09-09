@@ -34,16 +34,38 @@ Write `segments.json` with original `source.sha256` from manifest/evidence:
 {
   "source_sha256": "ORIGINAL_SOURCE_SHA256",
   "segments": [
-    {"id": "seg-001", "start_seconds": 0, "end_seconds": 4.5, "title": "Opening"},
-    {"id": "seg-002", "start_seconds": 4.5, "end_seconds": 9, "title": "Second shot"}
+    {
+      "id": "seg-001",
+      "start_seconds": 0,
+      "end_seconds": 4.5,
+      "title": "开场人物近景",
+      "shot_size": "近景",
+      "motion_effects": "手持轻微晃动；硬切入场",
+      "visuals": "人物位于画面左侧，室内暖光背景",
+      "dialogue_subtitle": "口播原文；无字幕时写无",
+      "bgm": "轻快节奏音乐，低音量铺底",
+      "sound_effects": "环境人声",
+      "on_screen_text": "右上角白色标题；没有则写无",
+      "analysis": "观察与镜头作用，推测须显式标注",
+      "video_generation_prompt": "忠于证据的单镜头生成提示词"
+    }
   ]
 }
 ```
 
+Every visual segment should provide all table fields, using `无` rather than an
+empty guess when an element is absent. `report.html` leads with a wide,
+scrollable shot table: 帧、时间、景别、运动特效、画面、口播字幕、BGM、音效、
+画面花字、分析/提示词. The complete narrative follows beneath it. Images are
+embedded, colored column groups remain readable offline, and print CSS uses A3
+landscape. Do not hand-author HTML or place executable markup in any field.
+
 Author `report-draft.md` with the complete requested analysis and every shot's
 video-generation prompt. Put exactly one `{{frame:seg-001}}` marker in that seg's
 section; likewise for every other ID. Markers belong on standalone lines, outside
-code blocks/tables. Do not ask another model to summarize or fabricate images.
+code blocks/tables. The renderer creates the HTML table from `segments.json`; the
+markers keep the Markdown package illustrated. Do not ask another model to
+summarize or fabricate images.
 
 ```sh
 python scripts/build_visual_report.py --video "C:/absolute/task/source.mp4" --segments "C:/absolute/task/segments.json" --report "C:/absolute/task/report-draft.md" --output-dir "C:/absolute/task/delivery"

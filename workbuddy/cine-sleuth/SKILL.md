@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links in WorkBuddy and de
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.0.0`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.1.0`.
 
 ## Deliver the user's result
 
@@ -16,8 +16,9 @@ For link input and every illustrated final report, first read
 `${CODEBUDDY_SKILL_DIR}/scripts/` paths. Resolve authorized Douyin links with
 `prepare_video_source.py`; local input is unchanged. After WorkBuddy authors the
 report, run `build_visual_report.py` with `segments.json` and `report-draft.md`.
-Deliver self-contained `report.html` and the illustrated Markdown package, with
-the original first frame for every final visual segment. Raw model output and
+Deliver self-contained `report.html` with the wide, colored, per-shot analysis
+table defined there, plus the illustrated Markdown package, with the original
+first frame for every final visual segment. Raw model output and
 Lab completion remain unchanged. Transcript-only output may remain text.
 
 The user should only need to provide a video and describe the desired analysis. Choose full 拉片 by default, or narrow the output to transcript, scene/shot breakdown, or short-form/ad analysis when requested. Unless the user explicitly requests transcript-only output, include one directly usable video-generation prompt for every shot.

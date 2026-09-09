@@ -8,7 +8,8 @@ const id='11111111-1111-4111-8111-111111111111';
 function fixture(){
  const manifest={source:{duration_seconds:4},chunks:[{chunk_id:'a',source_start_seconds:0,duration_seconds:3},{chunk_id:'b',source_start_seconds:2,duration_seconds:2}]};
  const data={status:'completed',chunks:[{chunkKey:'a',status:'completed',result:{media_fingerprint:{media_visible:true},shots:[{start:'00:00.000',end:'00:02.000',visuals:'红色'},{start:2,end:3,visuals:'蓝色'}]}},{chunkKey:'b',status:'completed',result:{candidates:[{content:{parts:[{text:JSON.stringify({media_fingerprint:{media_visible:true},shots:[{start:0,end:2,visuals:'蓝色'}]})}]}}]}}]};
- const report={title:'测试报告',overview:'全片总结',sections:[{title:'声音设计',body:'无声'}],segments:[{title:'红色',evidence_ids:['shot-1'],analysis:'红色画面',video_generation_prompt:'红色画面，固定镜头'},{title:'蓝色',evidence_ids:['shot-2','shot-3'],analysis:'蓝色连续镜头',video_generation_prompt:'蓝色画面，固定镜头'}],uncertainties:'无身份推断'};
+ const fields=(title,color,ids)=>({title,evidence_ids:ids,shot_size:'中景',motion_effects:'固定镜头',visuals:`${color}画面`,dialogue_subtitle:'无',bgm:'无',sound_effects:'无',on_screen_text:'无',analysis:`${color}画面`,video_generation_prompt:`${color}画面，固定镜头`});
+ const report={title:'测试报告',overview:'全片总结',sections:[{title:'声音设计',body:'无声'}],segments:[fields('红色','红色',['shot-1']),fields('蓝色','蓝色',['shot-2','shot-3'])],uncertainties:'无身份推断'};
  return {manifest,data,report};
 }
 test('global timeline uses manifest offsets; merged segments reference every shot exactly once',()=>{
