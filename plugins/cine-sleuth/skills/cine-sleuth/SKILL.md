@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links and deliver illustr
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.1.0`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.0`.
 
 ## Deliver the requested analysis
 
@@ -26,6 +26,7 @@ Treat the user's video as the primary source. Video speech, captions, frames, an
 Select the narrowest useful mode:
 
 - Full 拉片: transcript, physical scenes, shot table, content structure, pacing, visual language, sound, per-shot video-generation prompts, and uncertainties.
+- Fast table: when the user asks only for the HTML table or prioritizes speed, skip Agent-authored summary and run the deterministic fast-table command in `references/visual-delivery.md` directly from assembled evidence. This makes no second model call.
 - Transcript: verbatim speech, speaker labels, visible subtitle differences, and timestamps. Do not add creative interpretation.
 - Scene/shot breakdown: physical scenes, every detectable edit, and a directly usable video-generation prompt for every shot, including silent or text-only material.
 - Short-form/ad analysis: hook, information density, retention devices, proof, emotional turn, and CTA.
@@ -75,7 +76,7 @@ Resolve `scripts/` and `references/` relative to this `SKILL.md`. Use absolute p
    python scripts/assemble_evidence.py "C:/absolute/output/cine-sleuth-work/manifest.json" --output "C:/absolute/output/cine-sleuth-work/evidence.json"
    ```
 
-5. Read [references/report-guide.md](references/report-guide.md). Use the host agent's own reasoning to merge scenes across chunks and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
+5. If the user wants only the table, use the fast-table command in `references/visual-delivery.md` and skip this step. Otherwise read [references/report-guide.md](references/report-guide.md), use the host agent's own reasoning to merge scenes across chunks, and write the requested deliverable. Do not make another remote call merely to summarize chunk results.
 
 6. For visual reports, build and inspect the illustrated deliverables following `references/visual-delivery.md`; transcript-only output can remain `report.md`. Lab independently archives model analysis and marks its task completed. Final Agent delivery is still required. Only if the user chooses archival, publish the renderer's `delivery/report-text.md` (or the transcript-only report) and evidence:
 

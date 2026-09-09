@@ -3,11 +3,13 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import build_visual_report as visual
+import build_fast_table as fast
 import prepare_video_source as source
 from prepare_video import sha256_file
 
@@ -129,6 +131,43 @@ class VisualTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 visual.build(self.video, path, report, self.root / "invalid-output")
             self.assertFalse((self.root / "invalid-output").exists())
+
+    def test_fast_table_maps_existing_evidence_without_another_model(self):
+        evidence = {"shot_evidence": [
+            {"source_chunk_id": "a", "global_start_seconds": 0, "global_end_seconds": 1,
+             "shot_size": "近景", "camera_movement": "固定", "visuals": "人物面对镜头说话",
+             "on_screen_text": ["标题"], "sound": "室内环境声", "video_generation_prompt": "人物近景"},
+            {"source_chunk_id": "b", "global_start_seconds": 0.05, "global_end_seconds": 1,
+             "shot_size": "近景", "camera_movement": "固定", "visuals": "人物面对镜头说话",
+             "on_screen_text": ["标题"], "sound": "室内环境声", "video_generation_prompt": "人物近景"},
+        ], "transcript": [{"global_start_seconds": 0.1, "global_end_seconds": 0.8,
+                             "speaker": "人物", "text": "你好", "subtitle_text": "你好"}],
+            "audio_events": [{"global_start_seconds": 0, "global_end_seconds": 1,
+                              "type": "music", "description": "轻快音乐"}]}
+        segments = fast.fast_segments(evidence)
+        self.assertEqual(len(segments), 1)
+        self.assertEqual(segments[0]["dialogue_subtitle"], "人物：你好")
+        self.assertEqual(segments[0]["bgm"], "轻快音乐")
+        self.assertEqual(segments[0]["on_screen_text"], "标题")
+
+    def test_fast_table_cli_builds_self_contained_html(self):
+        evidence = {"source": {"sha256": sha256_file(self.video)}, "missing_chunks": [],
+                    "shot_evidence": [
+                        {"source_chunk_id": "a", "global_start_seconds": item["start_seconds"],
+                         "global_end_seconds": item["end_seconds"], "shot_size": "中景",
+                         "visuals": item["visuals"], "video_generation_prompt": item["video_generation_prompt"]}
+                        for item in self.data["segments"]],
+                    "transcript": [], "audio_events": []}
+        source = self.root / "fast-evidence.json"
+        source.write_text(json.dumps(evidence), encoding="utf-8")
+        output = self.root / "fast-delivery"
+        completed = subprocess.run([sys.executable, str(Path(fast.__file__)), "--video", str(self.video),
+                                    "--evidence", str(source), "--output-dir", str(output)],
+                                   check=True, capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(json.loads(completed.stdout)["mode"], "fast-table")
+        page = (output / "report.html").read_text(encoding="utf-8")
+        self.assertEqual(page.count('src="data:image/jpeg;base64,'), 3)
+        self.assertIn("仅输出逐镜证据表", page)
 
 
 if __name__ == "__main__":

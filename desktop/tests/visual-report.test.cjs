@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
-const {assemble,validateReport,reportMarkdown,VisualReports}=require('../src/visual-report.cjs');
+const {assemble,fastReport,validateReport,reportMarkdown,VisualReports}=require('../src/visual-report.cjs');
 const {hashFile,saveJson}=require('../src/pipeline.cjs');
 const {ModelSettings}=require('../src/model-settings.cjs');
 const id='11111111-1111-4111-8111-111111111111';
@@ -18,6 +18,27 @@ test('global timeline uses manifest offsets; merged segments reference every sho
  assert.match(reportMarkdown(value,evidence),/\{\{frame:seg-2\}\}/);
  report.segments.pop();assert.throws(()=>validateReport(JSON.stringify(report),evidence),/遗漏/);
  data.chunks[0].result.shots[0].end='bad';assert.throws(()=>assemble(data,manifest),/时间码/);
+});
+test('fast table reuses cloud shot evidence without a report model',()=>{
+ const {manifest,data}=fixture(),evidence=assemble(data,manifest),report=fastReport(evidence);
+ assert.equal(report.segments.length,2);assert.equal(report.sections.length,0);
+ assert.equal(report.segments[0].visuals,'红色');assert.equal(report.segments[0].analysis,'快速表格模式：未生成扩展分析');
+ assert.equal(report.overview.includes('未进行额外长文总结'),true);
+});
+test('fast report generation skips the configured report model',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'cine-fast-report-'));
+ try{
+  const {manifest,data}=fixture(),video=path.join(root,'source.mp4');await fs.writeFile(video,'fixture');
+  manifest.source.path=video;manifest.source.sha256=await hashFile(video);
+  await saveJson(path.join(root,'tasks','owner',id,'manifest.json'),manifest);
+  let calls=0,captured;
+  const reports=new VisualReports({root:path.join(root,'reports'),runtime:root,notify:()=>{},chooseVideo:async()=>video,
+   engine:{root:path.join(root,'tasks'),running:false,tasks:async()=>[{id,userId:'owner',jobId:id}]},
+   models:{busy:false,visualReport:async()=>{calls++;throw Error('must not run');}},
+   prepare:async(_,request)=>{captured=JSON.parse(await fs.readFile(request.segments,'utf8'));await fs.mkdir(request.outputDir);await fs.writeFile(path.join(request.outputDir,'report.html'),'<html>fast</html>');}});
+  const saved=await reports.generate('owner',id,data,{mode:'fast'});
+  assert.equal(calls,0);assert.equal(saved.model,'本地极速模式');assert.equal(captured.segments.length,2);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 test('invalid visibility, duplicate evidence, injected markers and incomplete analysis are refused',()=>{
  const {manifest,data,report}=fixture(),evidence=assemble(data,manifest);

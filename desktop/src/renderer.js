@@ -6,7 +6,7 @@ function notice(text){$('notice').textContent=text||'';$('notice').classList.tog
 async function perform(fn){try{return await fn();}catch(error){notice(error.message);}}
 function element(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function switchView(value){view=value;closeUpdates();for(const item of ['import','history','result','settings'])$(item+'-view').classList.toggle('hidden',item!==value);$('location').textContent=value==='import'?'新建分析':value==='history'?'分析历史':value==='settings'?'模型设置':'模型结果';$('nav-settings').classList.toggle('active',value==='settings');$('nav-import').classList.toggle('active',value==='import');$('nav-history').classList.toggle('active',value==='history');}
-function setBusy(){const generating=generationActivity?.status==='running'||reportBusy;const blocked=Boolean(state.running)||loading||generating;$('start').disabled=blocked||!state.user||!$('consent').checked||(mode==='local'?!selected:!$('url').value.trim());$('login').disabled=blocked;$('logout').disabled=blocked;$('summarize').disabled=!resultComplete||blocked;$('generate-report').disabled=!resultComplete||blocked;$('save-settings').disabled=blocked;$('clear-settings').disabled=blocked;}
+function setBusy(){const generating=generationActivity?.status==='running'||reportBusy;const blocked=Boolean(state.running)||loading||generating;$('start').disabled=blocked||!state.user||!$('consent').checked||(mode==='local'?!selected:!$('url').value.trim());$('login').disabled=blocked;$('logout').disabled=blocked;$('summarize').disabled=!resultComplete||blocked;$('generate-report').disabled=!resultComplete||blocked;$('generate-fast-report').disabled=!resultComplete||blocked;$('save-settings').disabled=blocked;$('clear-settings').disabled=blocked;}
 async function refresh(){state=await api.state();$('account-name').textContent=state.user?.displayName||'尚未登录';$('login').classList.toggle('hidden',!!state.user);$('logout').classList.toggle('hidden',!state.user);$('devices').classList.toggle('hidden',!state.user);if(state.authError)notice(state.authError);if(api.generationState)renderGeneration(await api.generationState());renderTasks();setBusy();}
 const statusNames={preparing:'准备中',uploading:'上传中',analyzing:'分析中',queued:'等待分析',processing:'处理中',completed:'已完成',failed:'失败',paused:'已暂停'};
 function taskRow(task,local){
@@ -27,7 +27,7 @@ function renderTasks(){const list=$('tasks');list.replaceChildren();if(!state.ta
 async function history(more=false){const body=await api.history(more?nextCursor:null);if(!more)$('history').replaceChildren();if(body.jobs.length)$('history').querySelector('.empty')?.remove();for(const task of body.jobs)$('history').append(taskRow(task,false));if(!more&&!body.jobs.length)$('history').append(element('div',body.nextCursor?'本页记录已在本机隐藏，可继续加载更多。':'本机列表暂无可显示的历史。','empty'));nextCursor=body.nextCursor;$('more').classList.toggle('hidden',!nextCursor);}
 function evidence(raw){if(raw?.candidates){const text=(raw.candidates[0]?.content?.parts||[]).map(p=>p.text||'').join('\n').replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');try{return JSON.parse(text);}catch{return raw;}}return raw;}
 const labels={media_fingerprint:'画面识别',chunk:'片段信息',transcript:'台词与字幕',shots:'镜头证据',scenes:'场景',audio:'声音',audio_events:'声音事件',uncertainties:'不确定项',visual_segments:'视觉段落',sound_design:'声音设计',screen_text:'画面文字',narrative:'叙事结构'};
-async function showResult(id){const data=await api.results(id);resultId=id;resultComplete=data.status==='completed';previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren();$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');$('summarize').disabled=!resultComplete||reportBusy;$('generate-report').disabled=!resultComplete||reportBusy;renderReport(null);const saved=await api.summaryRead(id);if(resultId!==id)return;renderSummary(saved);if(api.reportRead){const report=await api.reportRead(id);if(resultId!==id)return;renderReport(report);}
+async function showResult(id){const data=await api.results(id);resultId=id;resultComplete=data.status==='completed';previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren();$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');$('summarize').disabled=!resultComplete||reportBusy;$('generate-report').disabled=!resultComplete||reportBusy;$('generate-fast-report').disabled=!resultComplete||reportBusy;renderReport(null);const saved=await api.summaryRead(id);if(resultId!==id)return;renderSummary(saved);if(api.reportRead){const report=await api.reportRead(id);if(resultId!==id)return;renderReport(report);}
   if(!data.chunks.length)$('result').append(element('div','还没有模型结果。可以返回任务继续分析。','empty'));
   for(const chunk of data.chunks){const card=element('article',undefined,'result-chunk');card.append(element('h2',`${chunk.chunkKey} · ${statusNames[chunk.status]||chunk.status}`));
     const value=evidence(chunk.result);if(!value)card.append(element('p',chunk.errorMessage||'此片段尚未完成','observation'));
@@ -55,12 +55,14 @@ function renderSummary(value){$('summary').textContent=value?`${value.model} · 
 let reportBusy=false;
 function renderReport(value){
   $('open-report').classList.toggle('hidden',!value);$('export-report').classList.toggle('hidden',!value);
-  $('generate-report').classList.toggle('hidden',!!value);
-  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'报告按镜头分批生成并保存，中断后再次生成可继续已保存的进度。';
+  $('generate-report').classList.toggle('hidden',!!value);$('generate-fast-report').classList.toggle('hidden',!!value);
+  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'极速表格不再调用总结模型；完整报告按镜头分批生成并可断点继续。';
 }
-$('generate-report').onclick=()=>perform(async()=>{
-  const id=resultId;reportBusy=true;$('generate-report').disabled=true;$('summarize').disabled=true;notice('');
-  try{const value=await api.reportGenerate(id);if(resultId===id){renderReport(value);if(!value)$('report-status').textContent='已取消选择原片，没有发起报告生成';}if(value)notice('图文报告已生成，可打开或导出离线 HTML');}
+$('generate-fast-report').onclick=()=>generateVisualReport('fast');
+$('generate-report').onclick=()=>generateVisualReport('full');
+const generateVisualReport=mode=>perform(async()=>{
+  const id=resultId;reportBusy=true;$('generate-report').disabled=true;$('generate-fast-report').disabled=true;$('summarize').disabled=true;notice('');
+  try{const value=await api.reportGenerate(id,mode);if(resultId===id){renderReport(value);if(!value)$('report-status').textContent='已取消选择原片，没有发起报告生成';}if(value)notice(mode==='fast'?'极速表格已生成，可打开或导出离线 HTML':'完整图文报告已生成，可打开或导出离线 HTML');}
   catch(error){if(resultId===id)$('report-status').textContent=error.message;throw error;}
   finally{reportBusy=false;setBusy();}
 });

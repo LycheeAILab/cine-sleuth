@@ -28,6 +28,26 @@ Merge overlap duplicates; use GLOBAL source times (`global_start_seconds` and
 `global_end_seconds`), not chunk-local `start`/`end`. Preserve uncertain boundaries.
 Transcript-only reports do not require images.
 
+### Fast table-only path
+
+When the user asks only for the table or prioritizes speed, do not ask the host
+Agent or another model to rewrite every shot. The assembled evidence already
+contains the required columns and generation prompt. Run this deterministic local
+path immediately after `assemble_evidence.py`:
+
+```sh
+python scripts/build_fast_table.py --video "C:/absolute/task/source.mp4" --evidence "C:/absolute/task/evidence.json" --output-dir "C:/absolute/task/fast-delivery"
+```
+
+This performs conservative overlap deduplication, joins overlapping transcript and
+audio evidence, extracts original first frames, and writes the same self-contained
+HTML table. It makes no second model call and intentionally omits long-form
+narrative synthesis. If the user later asks for narrative structure or creative
+interpretation, run the full path below instead of presenting the fast table as a
+complete report.
+
+### Full illustrated report path
+
 Write `segments.json` with original `source.sha256` from manifest/evidence:
 
 ```json

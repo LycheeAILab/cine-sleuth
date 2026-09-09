@@ -133,7 +133,7 @@ else {
     }
     handle('generationState',()=>generation.read(user?.id));
     handle('generationCancel',operationId=>generation.cancel(user?.id,operationId));
-    handle('reportGenerate',id=>generate(id,'report',(owner,data,options)=>reports.generate(owner,id,data,options)));
+    handle('reportGenerate',(id,mode)=>generate(id,'report',(owner,data,options)=>reports.generate(owner,id,data,{...options,mode})));
     handle('reportOpen',async(id)=>{await results(id);const file=await reports.file(user.id,id);const error=await shell.openPath(file);if(error)throw Error('无法打开报告，请导出 HTML 后使用浏览器打开');return '已打开离线 HTML 报告';});
     handle('reportExport',async(id)=>{await results(id);const file=await reports.file(user.id,id);const choice=await dialog.showSaveDialog(win,{title:'导出图文拉片报告',defaultPath:`CineSleuth-${id}.html`,filters:[{name:'离线 HTML（含首帧图片）',extensions:['html']}]});if(choice.canceled)return '已取消导出';await fs.copyFile(file,choice.filePath);return 'HTML 已导出，图片已内嵌，可离线打开';});
     handle('modelStatus',async()=>models.status((await currentUser()).id));
