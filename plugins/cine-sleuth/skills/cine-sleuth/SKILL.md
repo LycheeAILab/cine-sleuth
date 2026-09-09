@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links and deliver illustr
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.0`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.1`.
 
 ## Deliver the requested analysis
 
@@ -32,6 +32,8 @@ Select the narrowest useful mode:
 - Short-form/ad analysis: hook, information density, retention devices, proof, emotional turn, and CTA.
 
 If the user simply asks to 拉片, default to the full mode. Ask for clarification only when the requested deliverable materially changes the analysis.
+
+Before starting a full report, briefly set expectations in the user's language: it requires substantially more Agent reasoning than the fast table and may take several minutes when there are many shots. Mention the fast table as the quicker option. If the user explicitly chose the full report, this is a notice rather than another confirmation gate.
 
 ## Explain cloud use briefly
 

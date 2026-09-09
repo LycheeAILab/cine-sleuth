@@ -56,7 +56,7 @@ let reportBusy=false;
 function renderReport(value){
   $('open-report').classList.toggle('hidden',!value);$('export-report').classList.toggle('hidden',!value);
   $('generate-report').classList.toggle('hidden',!!value);$('generate-fast-report').classList.toggle('hidden',!!value);
-  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'极速表格不再调用总结模型；完整报告按镜头分批生成并可断点继续。';
+  $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'极速表格不再调用总结模型；完整报告会再次调用模型，镜头较多时可能需要数分钟并产生额外费用。';
 }
 $('generate-fast-report').onclick=()=>generateVisualReport('fast');
 $('generate-report').onclick=()=>generateVisualReport('full');
