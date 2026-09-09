@@ -1,4 +1,4 @@
-# 镜探 Windows 桌面端 · 2.0.6
+# 镜探 Windows 桌面端 · 2.0.7
 
 ## 2.0.3 · 记录管理与失败恢复
 
@@ -27,7 +27,7 @@
 
 ## 当前已发布版本
 
-本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.6`，与 Skill `v2.2.1` 独立。
+本版采用 Lab 浅蓝白主题。左下角仅保留下载图标与版本号，点击展开更新浮层，可查看进度、重试和重启安装；点击空白或 Esc 关闭，不打断当前输入。桌面标签为 `desktop-v2.0.7`，与 Skill `v2.2.1` 独立。
 
 本阶段实现：Lab 浏览器授权 → 本地视频或抖音/Bilibili/YouTube 链接取片 → 原视频上传 → 分段模型分析 → 云端结果与历史。支持 JSON 导出、用户硅基流动 Key 手动总结/Markdown，以及图文报告/首帧/离线 HTML 导出。桌面使用所选模型代替宿主 Agent 整理报告，最终报告仅在本机保存，不自动云端归档。
 
@@ -35,7 +35,7 @@
 
 ## 使用
 
-1. 运行 [Windows x64 2.0.6 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.6-Windows-x64-Setup.exe) 安装。
+1. 运行 [Windows x64 2.0.7 安装包](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.7-Windows-x64-Setup.exe) 安装。
 2. 点击“登录 LycheeAILab”，在系统浏览器登录并授权，返回桌面端。
 3. 选择最长 5 分钟的本地视频，或粘贴有权使用的抖音、Bilibili、YouTube 单条视频链接。确认片源授权及云端分析后开始。
 4. 查看本机进度及模型结果。失败或重启后点击“继续”，已完成的云端片段会跳过。暂停本地流程不会取消已经提交到 Lab 的模型请求。
@@ -125,6 +125,10 @@ Electron 用户数据目录中，`desktop-session.enc` 用 Windows DPAPI 加密�
 分别展示正文与推理字符数、供应商返回的推理片段及正文预览，均用 textContent 渲染，不执行模型 HTML。不将推理写入报告或日志。调用增加 SiliconFlow 独立 thinking_budget=4096，max_tokens 仍用于正文；不设置总时间截止，不自动重发付费请求。依据官方 https://docs.siliconflow.cn/docs/api/chat-completions-post。
 
 27 项单测、原生 Electron 取消/刷新/文件保留和双尺寸 UI 通过；覆盖超过 16 MB 协议流仍保存小正文，以及真正超大事件/正文拒绝。真实 GLM-5.3 合成 JSON 小样本约 5.2 秒返回 1,003 推理字符、30 正文字符、stop；没有重跑用户完整视频报告。不能以小样本代替长视频真实报告验收。
+
+## 2.0.7：极速表格与完整报告耗时提示
+
+新增“极速表格（推荐）”，直接复用云端逐镜证据，在本机完成台词/声音匹配、首帧抽取和离线 HTML，不再调用总结模型。完整报告入口标记为“较慢”，并明确提示镜头较多时可能需要数分钟及产生额外模型费用。HTML 使用横向彩色逐镜表格，同时保留完整报告模式。
 
 ## 2.0.6：长图文报告分批生成
 

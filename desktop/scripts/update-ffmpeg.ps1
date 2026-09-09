@@ -10,7 +10,13 @@ if (-not (Test-Path $archive)) {
 }
 $expected = (curl.exe --ssl-revoke-best-effort --fail --silent --show-error --location https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.sha256).Trim().Split(' ')[0]
 if ($LASTEXITCODE -ne 0 -or $expected -notmatch '^[a-fA-F0-9]{64}$') { throw 'Cannot read FFmpeg checksum' }
-if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne $expected) { throw 'FFmpeg checksum mismatch' }
+$stream = [IO.File]::OpenRead($archive)
+try {
+  $sha256 = [Security.Cryptography.SHA256]::Create()
+  try { $actual = ([BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '') }
+  finally { $sha256.Dispose() }
+} finally { $stream.Dispose() }
+if ($actual -ne $expected.ToUpperInvariant()) { throw 'FFmpeg checksum mismatch' }
 Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force
 $binaryRoot = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
 foreach ($binaryName in @('ffmpeg.exe','ffprobe.exe')) {
