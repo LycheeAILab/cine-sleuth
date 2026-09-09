@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-version="${1:-2.2.1}"
+version="${1:-2.2.2}"
 raw_root="https://github.com/LycheeAILab/cine-sleuth/releases/download/v${version}"
 archive_name="cine-sleuth-workbuddy-${version}.zip"
 temp_root="$(mktemp -d)"

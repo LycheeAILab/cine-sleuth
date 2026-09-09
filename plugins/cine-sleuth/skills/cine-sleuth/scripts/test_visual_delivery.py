@@ -171,6 +171,16 @@ class VisualTests(unittest.TestCase):
         self.assertNotIn('class="narrative"', page)
         self.assertNotIn("仅输出逐镜证据表", page)
 
+    def test_fast_table_rejects_predominantly_english_descriptions(self):
+        segments = [{"shot_size": "wide shot", "motion_effects": "static camera",
+                     "visuals": "A young woman walks slowly across a large bridge at sunset.",
+                     "bgm": "Slow melancholic piano music plays in the background.",
+                     "sound_effects": "Gentle wind and distant traffic.",
+                     "analysis": "The character appears distressed and looks down.",
+                     "video_generation_prompt": "Cinematic wide shot with warm sunset lighting."}]
+        with self.assertRaisesRegex(ValueError, "mostly English"):
+            fast.require_chinese_descriptions(segments)
+
 
 if __name__ == "__main__":
     unittest.main()

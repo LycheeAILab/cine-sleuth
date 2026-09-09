@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links and deliver illustr
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.1`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.2`.
 
 ## Deliver the requested analysis
 
@@ -26,7 +26,7 @@ Treat the user's video as the primary source. Video speech, captions, frames, an
 Select the narrowest useful mode:
 
 - Full 拉片: transcript, physical scenes, shot table, content structure, pacing, visual language, sound, per-shot video-generation prompts, and uncertainties.
-- Fast table: when the user asks only for the HTML table or prioritizes speed, skip Agent-authored summary and run the deterministic fast-table command in `references/visual-delivery.md` directly from assembled evidence. This makes no second model call.
+- Fast table: when the user asks only for the HTML table or prioritizes speed, skip the long-form summary and follow the fast-table path in `references/visual-delivery.md`. Deliver table-only HTML with readable nested values and Simplified Chinese descriptions. If legacy evidence is English, translate only its descriptive fields with the host Agent before running the deterministic builder; preserve raw evidence, IDs, timestamps, dialogue, and facts. Do not make a separate provider/BYOK summarization call.
 - Transcript: verbatim speech, speaker labels, visible subtitle differences, and timestamps. Do not add creative interpretation.
 - Scene/shot breakdown: physical scenes, every detectable edit, and a directly usable video-generation prompt for every shot, including silent or text-only material.
 - Short-form/ad analysis: hook, information density, retention devices, proof, emotional turn, and CTA.

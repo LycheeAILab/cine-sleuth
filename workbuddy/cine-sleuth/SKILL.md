@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links in WorkBuddy and de
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.1`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.2`.
 
 ## Deliver the user's result
 
@@ -23,7 +23,7 @@ Lab completion remain unchanged. Transcript-only output may remain text.
 
 The user should only need to provide a video and describe the desired analysis. Choose full 拉片 by default, or narrow the output to transcript, scene/shot breakdown, or short-form/ad analysis when requested. Unless the user explicitly requests transcript-only output, include one directly usable video-generation prompt for every shot.
 
-When the user asks only for the HTML shot table or prioritizes speed, use the deterministic fast-table command in `references/visual-delivery.md` immediately after evidence assembly. Skip WorkBuddy-authored long-form summary; this path makes no second model call.
+When the user asks only for the HTML shot table or prioritizes speed, follow the fast-table path in `references/visual-delivery.md` immediately after evidence assembly. Skip WorkBuddy-authored long-form summary and deliver table-only HTML with Simplified Chinese descriptions. If legacy evidence contains English paragraphs, WorkBuddy must translate only the descriptive fields in a copy of the evidence before running the deterministic builder, preserving raw evidence, IDs, timestamps, dialogue, and facts. This path makes no separate provider/BYOK summarization call.
 
 Before starting a full report, briefly tell the user that it needs substantially more Agent reasoning than the fast table and may take several minutes for videos with many shots. Offer the fast table as the quicker option. Treat this as an expectation notice, not a second confirmation when the user already chose the full report.
 

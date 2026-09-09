@@ -10,7 +10,7 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-2.2.1-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.2.1)
+  [![Version](https://img.shields.io/badge/version-2.2.2-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.2.2)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
@@ -36,6 +36,12 @@
 > Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.9`，功能范围见 [桌面说明](desktop/README.md)。
 
 ## ✨ 核心能力
+
+### 2.2.2 · Codex / WorkBuddy 极速中文表格
+
+- **仅表格 HTML**：极速模式不再在表格下方重复全片正文和全局台词。
+- **对象字段展开**：花字、观察事实等嵌套结构转为可读文字，不再出现 `[object Object]`。
+- **中文交付硬约束**：新分析直接请求简体中文证据；旧英文证据由 Codex 或 WorkBuddy 宿主模型仅翻译描述字段，不调用额外 BYOK 总结服务，不添加事实。
 
 ### 2.2.1 · 极速拉片表与完整报告耗时提示
 
@@ -115,7 +121,7 @@ flowchart LR
 
 在 Codex 桌面端新建任务并发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.1/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.2/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
 
 #### 手动安装
 
@@ -132,9 +138,9 @@ codex plugin add cine-sleuth@cine-sleuth
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.1/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.2.1；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.2/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.2.2；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.2.1/cine-sleuth-workbuddy-2.2.1.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.2.2/cine-sleuth-workbuddy-2.2.2.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 

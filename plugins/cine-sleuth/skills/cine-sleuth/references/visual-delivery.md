@@ -30,21 +30,30 @@ Transcript-only reports do not require images.
 
 ### Fast table-only path
 
-When the user asks only for the table or prioritizes speed, do not ask the host
-Agent or another model to rewrite every shot. The assembled evidence already
-contains the required columns and generation prompt. Run this deterministic local
-path immediately after `assemble_evidence.py`:
+When the user asks only for the table or prioritizes speed, skip long-form report
+reasoning. The final fast table must use Simplified Chinese for descriptive fields.
+Normally the chunk prompt already supplies Chinese evidence. If older cached
+evidence contains English paragraphs, use the host Agent's own current reasoning
+to write a localized copy such as `evidence-zh.json`: translate only descriptive
+fields (shot size, camera, visuals, audio descriptions, observations,
+interpretations, uncertainties, and generation prompts), while preserving source
+metadata, IDs, timestamps, confidence, raw dialogue, and the original
+`evidence.json`. This is not a separate provider/BYOK summarization call and must
+not add facts. Then run the deterministic local path:
 
 ```sh
 python scripts/build_fast_table.py --video "C:/absolute/task/source.mp4" --evidence "C:/absolute/task/evidence.json" --output-dir "C:/absolute/task/fast-delivery"
 ```
 
-This performs conservative overlap deduplication, joins overlapping transcript and
-audio evidence, extracts original first frames, and writes the same self-contained
-HTML table. It makes no second model call and intentionally omits long-form
-narrative synthesis. If the user later asks for narrative structure or creative
-interpretation, run the full path below instead of presenting the fast table as a
-complete report.
+Use `evidence-zh.json` instead in the command when localization was required. The
+builder rejects predominantly English descriptive evidence instead of silently
+delivering a mixed-language table. It performs conservative overlap
+deduplication, joins overlapping transcript and audio evidence, extracts original
+first frames, and writes a self-contained table-only HTML without duplicated
+global transcript or narrative below it. It makes no separate model/API call and
+intentionally omits long-form synthesis. If the user later asks for narrative
+structure or creative interpretation, run the full path below instead of
+presenting the fast table as a complete report.
 
 ### Full illustrated report path
 

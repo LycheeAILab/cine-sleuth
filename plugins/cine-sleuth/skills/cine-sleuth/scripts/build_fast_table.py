@@ -131,6 +131,19 @@ def fast_segments(evidence: dict) -> list[dict]:
     return segments
 
 
+def require_chinese_descriptions(segments: list[dict]) -> None:
+    fields = ("shot_size", "motion_effects", "visuals", "bgm", "sound_effects", "analysis", "video_generation_prompt")
+    content = " ".join(text(segment.get(field)) for segment in segments for field in fields)
+    latin = sum(len(word) for word in re.findall(r"[A-Za-z]{3,}", content))
+    chinese_count = len(re.findall(r"[\u3400-\u9fff]", content))
+    if latin >= 24 and latin > chinese_count * 0.15:
+        raise ValueError(
+            "Fast table descriptive evidence is still mostly English. "
+            "Use the host Agent to translate descriptive fields into Simplified Chinese in a copy of evidence.json, "
+            "preserve IDs/timestamps/raw evidence, then rerun the fast-table builder."
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
@@ -142,6 +155,7 @@ def main() -> None:
     if evidence.get("missing_chunks"):
         raise SystemExit("Fast table failed: evidence has missing chunks")
     segments = fast_segments(evidence)
+    require_chinese_descriptions(segments)
     with tempfile.TemporaryDirectory(prefix="cine-fast-table-") as temporary:
         work = Path(temporary)
         segments_path, report_path = work / "segments.json", work / "report-draft.md"

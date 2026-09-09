@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "2.2.1"
+VERSION = "2.2.2"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -44,6 +44,7 @@ def main() -> int:
             "cine-sleuth/scripts/publish_result.py",
             "cine-sleuth/scripts/prepare_video_source.py",
             "cine-sleuth/scripts/build_visual_report.py",
+            "cine-sleuth/scripts/build_fast_table.py",
             "cine-sleuth/scripts/douk_downloader/download.py",
             "cine-sleuth/scripts/douk_downloader/a_bogus.py",
             "cine-sleuth/scripts/douk_downloader/LICENSE",
@@ -64,6 +65,7 @@ def main() -> int:
         require("video-generation prompt" in skill.lower(), "WorkBuddy Skill omits per-shot generation prompts")
         require("build_visual_report.py" in skill and "prepare_video_source.py" in skill,
                 "WorkBuddy instructions omit 2.0 workflow steps")
+        require("fast-table" in skill.lower(), "WorkBuddy instructions omit fast-table mode")
         for name in names:
             if name.endswith("/") or name == "cine-sleuth/SKILL.md":
                 continue
@@ -72,6 +74,7 @@ def main() -> int:
         prompt = archive.read("cine-sleuth/references/multimodal-segment-prompt.md").decode("utf-8")
         require('"video_generation_prompt"' in prompt, "Evidence schema omits per-shot generation prompts")
         require('"media_fingerprint"' in prompt, "Evidence schema omits media visibility verification")
+        require("简体中文" in prompt, "Evidence prompt does not require Chinese descriptions")
         provider_name = "gemi" + "ni"
         require(provider_name not in skill.lower(), "WorkBuddy Skill exposes an underlying provider name")
 
