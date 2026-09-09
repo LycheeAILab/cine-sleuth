@@ -13,10 +13,39 @@ import tempfile
 from build_visual_report import build
 
 
+TEXT_KEYS = ("text", "description", "observation", "item", "reason", "content", "label", "name", "type", "position", "style", "value")
+META_KEYS = {"id", "start", "end", "global_start_seconds", "global_end_seconds", "confidence", "source_chunk_id", "shot_ids", "transcript_ids"}
+ZH_TERMS = (
+    ("extreme close-up", "大特写"), ("medium close-up", "中近景"), ("medium long shot", "中全景"),
+    ("bird's-eye view", "俯瞰"), ("eye-level", "平视"), ("close-up", "特写"),
+    ("medium shot", "中景"), ("wide shot", "远景"), ("long shot", "远景"), ("full shot", "全景"),
+    ("low angle", "仰拍"), ("high angle", "俯拍"), ("handheld", "手持摄影"),
+    ("tracking shot", "跟拍"), ("static shot", "固定镜头"), ("static", "固定"),
+    ("zoom in", "推近"), ("zoom out", "拉远"), ("fade in", "淡入"), ("fade out", "淡出"),
+    ("dissolve", "叠化"), ("hard cut", "硬切"), ("cut", "切换"), ("pan", "横摇"), ("tilt", "俯仰摇镜"),
+    ("sound effect", "音效"), ("ambient sound", "环境声"), ("background music", "背景音乐"),
+    ("silence", "静音"), ("music", "音乐"),
+)
+
+
 def text(value: object) -> str:
+    if value is None:
+        return ""
     if isinstance(value, list):
-        return "；".join(str(item).strip() for item in value if str(item).strip())
-    return str(value or "").strip()
+        return "；".join(dict.fromkeys(item for entry in value if (item := text(entry))))
+    if isinstance(value, dict):
+        preferred = [text(value[key]) for key in TEXT_KEYS if key in value and text(value[key])]
+        if preferred:
+            return "，".join(dict.fromkeys(preferred))
+        return "，".join(dict.fromkeys(item for key, entry in value.items() if key not in META_KEYS and (item := text(entry))))
+    return str(value).strip()
+
+
+def chinese(value: object) -> str:
+    result = text(value)
+    for source, target in ZH_TERMS:
+        result = re.sub(re.escape(source), target, result, flags=re.IGNORECASE)
+    return result
 
 
 def similar(left: dict, right: dict) -> bool:
@@ -83,19 +112,19 @@ def fast_segments(evidence: dict) -> list[dict]:
                 if subtitle and subtitle != spoken:
                     lines.append(f"字幕：{subtitle}")
         events = [item for item in audio if overlaps(item, start, end)]
-        music = [item.get("description") for item in events if item.get("type") == "music"]
+        music = [chinese(item.get("description")) for item in events if item.get("type") == "music"]
         effects = [item.get("description") for item in events if item.get("type") != "music"]
-        observations = joined([text(shot.get("observed_facts")), text(shot.get("interpretations"))], "快速表格模式：未生成扩展分析")
-        visual = joined([text(shot.get("visuals")), text(shot.get("characters_actions")), text(shot.get("camera_angle"))])
+        observations = joined([chinese(shot.get("observed_facts")), chinese(shot.get("interpretations"))], "快速表格模式：未生成扩展分析")
+        visual = joined([chinese(shot.get("visuals")), chinese(shot.get("characters_actions")), chinese(shot.get("camera_angle"))])
         title_source = text(shot.get("on_screen_text")) or text(shot.get("visuals")) or f"镜头 {index}"
         segments.append({
             "id": f"seg-{index:03d}", "start_seconds": start, "end_seconds": end,
-            "title": title_source[:40], "shot_size": text(shot.get("shot_size")) or "未标注",
-            "motion_effects": joined([shot.get("transition_in"), shot.get("camera_movement")]),
+            "title": title_source[:40], "shot_size": chinese(shot.get("shot_size")) or "未标注",
+            "motion_effects": joined([chinese(shot.get("transition_in")), chinese(shot.get("camera_movement"))]),
             "visuals": visual, "dialogue_subtitle": joined(lines), "bgm": joined(music),
-            "sound_effects": joined(effects + [shot.get("sound")]),
+            "sound_effects": joined([chinese(item) for item in effects] + [chinese(shot.get("sound"))]),
             "on_screen_text": text(shot.get("on_screen_text")) or "无", "analysis": observations,
-            "video_generation_prompt": text(shot.get("video_generation_prompt")) or "未生成",
+            "video_generation_prompt": chinese(shot.get("video_generation_prompt")) or "未生成",
         })
     if not segments:
         raise ValueError("Evidence contains no usable shots")
@@ -116,7 +145,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="cine-fast-table-") as temporary:
         work = Path(temporary)
         segments_path, report_path = work / "segments.json", work / "report-draft.md"
-        segments_path.write_text(json.dumps({"source_sha256": evidence["source"]["sha256"], "segments": segments}, ensure_ascii=False, indent=2), encoding="utf-8")
+        segments_path.write_text(json.dumps({"source_sha256": evidence["source"]["sha256"], "table_only": True, "segments": segments}, ensure_ascii=False, indent=2), encoding="utf-8")
         report_path.write_text("# " + args.title + "\n\n仅输出逐镜证据表，不生成额外长文总结。\n\n" + "\n\n".join(f"## {item['id']}\n\n{{{{frame:{item['id']}}}}}" for item in segments), encoding="utf-8")
         result = build(args.video, segments_path, report_path, args.output_dir)
     result["mode"] = "fast-table"

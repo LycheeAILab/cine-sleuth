@@ -136,7 +136,7 @@ class VisualTests(unittest.TestCase):
         evidence = {"shot_evidence": [
             {"source_chunk_id": "a", "global_start_seconds": 0, "global_end_seconds": 1,
              "shot_size": "近景", "camera_movement": "固定", "visuals": "人物面对镜头说话",
-             "on_screen_text": ["标题"], "sound": "室内环境声", "video_generation_prompt": "人物近景"},
+             "on_screen_text": [{"text": "标题", "position": "顶部", "style": "白色粗体"}], "sound": "室内环境声", "video_generation_prompt": "人物近景"},
             {"source_chunk_id": "b", "global_start_seconds": 0.05, "global_end_seconds": 1,
              "shot_size": "近景", "camera_movement": "固定", "visuals": "人物面对镜头说话",
              "on_screen_text": ["标题"], "sound": "室内环境声", "video_generation_prompt": "人物近景"},
@@ -148,7 +148,8 @@ class VisualTests(unittest.TestCase):
         self.assertEqual(len(segments), 1)
         self.assertEqual(segments[0]["dialogue_subtitle"], "人物：你好")
         self.assertEqual(segments[0]["bgm"], "轻快音乐")
-        self.assertEqual(segments[0]["on_screen_text"], "标题")
+        self.assertEqual(segments[0]["on_screen_text"], "标题，顶部，白色粗体")
+        self.assertNotIn("object", json.dumps(segments[0], ensure_ascii=False).lower())
 
     def test_fast_table_cli_builds_self_contained_html(self):
         evidence = {"source": {"sha256": sha256_file(self.video)}, "missing_chunks": [],
@@ -167,7 +168,8 @@ class VisualTests(unittest.TestCase):
         self.assertEqual(json.loads(completed.stdout)["mode"], "fast-table")
         page = (output / "report.html").read_text(encoding="utf-8")
         self.assertEqual(page.count('src="data:image/jpeg;base64,'), 3)
-        self.assertIn("仅输出逐镜证据表", page)
+        self.assertNotIn('class="narrative"', page)
+        self.assertNotIn("仅输出逐镜证据表", page)
 
 
 if __name__ == "__main__":

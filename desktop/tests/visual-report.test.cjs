@@ -25,6 +25,15 @@ test('fast table reuses cloud shot evidence without a report model',()=>{
  assert.equal(report.segments[0].visuals,'红色');assert.equal(report.segments[0].analysis,'快速表格模式：未生成扩展分析');
  assert.equal(report.overview.includes('未进行额外长文总结'),true);
 });
+test('fast table flattens structured evidence and localizes common film terms',()=>{
+ const {manifest,data}=fixture(),evidence=assemble(data,manifest),shot=evidence.shots[0];
+ shot.shot_size='medium close-up';shot.camera_movement='static shot';shot.camera_angle='eye-level';
+ shot.on_screen_text=[{text:'主标题',position:'画面顶部',style:'白色粗体'}];
+ shot.observed_facts=[{observation:'人物面对镜头'}];
+ const segment=fastReport(evidence).segments[0],serialized=JSON.stringify(segment);
+ assert.equal(segment.shot_size,'中近景');assert.match(segment.motion_effects,/固定镜头/);assert.match(segment.visuals,/平视/);
+ assert.equal(segment.on_screen_text,'主标题，画面顶部，白色粗体');assert.doesNotMatch(serialized,/\[object Object\]/);
+});
 test('fast report generation skips the configured report model',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'cine-fast-report-'));
  try{
@@ -37,7 +46,7 @@ test('fast report generation skips the configured report model',async()=>{
    models:{busy:false,visualReport:async()=>{calls++;throw Error('must not run');}},
    prepare:async(_,request)=>{captured=JSON.parse(await fs.readFile(request.segments,'utf8'));await fs.mkdir(request.outputDir);await fs.writeFile(path.join(request.outputDir,'report.html'),'<html>fast</html>');}});
   const saved=await reports.generate('owner',id,data,{mode:'fast'});
-  assert.equal(calls,0);assert.equal(saved.model,'本地极速模式');assert.equal(captured.segments.length,2);
+  assert.equal(calls,0);assert.equal(saved.model,'本地极速模式');assert.equal(captured.segments.length,2);assert.equal(captured.table_only,true);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 test('invalid visibility, duplicate evidence, injected markers and incomplete analysis are refused',()=>{

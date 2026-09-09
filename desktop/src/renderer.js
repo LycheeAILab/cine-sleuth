@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id);
 const api=window.cine;
-let state={tasks:[],user:null},mode='local',selected=false,view='import',previousView='import',resultId=null,nextCursor=null,loading=false,resultComplete=false;
+let state={tasks:[],user:null},mode='local',selected=false,view='import',previousView='import',resultId=null,resultRequest=0,nextCursor=null,loading=false,resultComplete=false;
 let generationActivity=null;
 function notice(text){$('notice').textContent=text||'';$('notice').classList.toggle('hidden',!text);}
 async function perform(fn){try{return await fn();}catch(error){notice(error.message);}}
@@ -27,7 +27,7 @@ function renderTasks(){const list=$('tasks');list.replaceChildren();if(!state.ta
 async function history(more=false){const body=await api.history(more?nextCursor:null);if(!more)$('history').replaceChildren();if(body.jobs.length)$('history').querySelector('.empty')?.remove();for(const task of body.jobs)$('history').append(taskRow(task,false));if(!more&&!body.jobs.length)$('history').append(element('div',body.nextCursor?'本页记录已在本机隐藏，可继续加载更多。':'本机列表暂无可显示的历史。','empty'));nextCursor=body.nextCursor;$('more').classList.toggle('hidden',!nextCursor);}
 function evidence(raw){if(raw?.candidates){const text=(raw.candidates[0]?.content?.parts||[]).map(p=>p.text||'').join('\n').replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');try{return JSON.parse(text);}catch{return raw;}}return raw;}
 const labels={media_fingerprint:'画面识别',chunk:'片段信息',transcript:'台词与字幕',shots:'镜头证据',scenes:'场景',audio:'声音',audio_events:'声音事件',uncertainties:'不确定项',visual_segments:'视觉段落',sound_design:'声音设计',screen_text:'画面文字',narrative:'叙事结构'};
-async function showResult(id){const data=await api.results(id);resultId=id;resultComplete=data.status==='completed';previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren();$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');$('summarize').disabled=!resultComplete||reportBusy;$('generate-report').disabled=!resultComplete||reportBusy;$('generate-fast-report').disabled=!resultComplete||reportBusy;renderReport(null);const saved=await api.summaryRead(id);if(resultId!==id)return;renderSummary(saved);if(api.reportRead){const report=await api.reportRead(id);if(resultId!==id)return;renderReport(report);}
+async function showResult(id){const request=++resultRequest;resultId=id;resultComplete=false;previousView=view==='result'?previousView:view;switchView('result');$('result').replaceChildren(element('div','正在读取该任务结果…','empty'));$('summary').replaceChildren();$('summary').classList.add('hidden');$('export-summary').classList.add('hidden');renderReport(null);setBusy();const data=await api.results(id);if(request!==resultRequest||resultId!==id)return;resultComplete=data.status==='completed';$('result').replaceChildren();$('summarize').disabled=!resultComplete||reportBusy;$('generate-report').disabled=!resultComplete||reportBusy;$('generate-fast-report').disabled=!resultComplete||reportBusy;const saved=await api.summaryRead(id);if(request!==resultRequest||resultId!==id)return;renderSummary(saved);if(api.reportRead){const report=await api.reportRead(id);if(request!==resultRequest||resultId!==id)return;renderReport(report);}
   if(!data.chunks.length)$('result').append(element('div','还没有模型结果。可以返回任务继续分析。','empty'));
   for(const chunk of data.chunks){const card=element('article',undefined,'result-chunk');card.append(element('h2',`${chunk.chunkKey} · ${statusNames[chunk.status]||chunk.status}`));
     const value=evidence(chunk.result);if(!value)card.append(element('p',chunk.errorMessage||'此片段尚未完成','observation'));
@@ -55,7 +55,8 @@ function renderSummary(value){$('summary').textContent=value?`${value.model} · 
 let reportBusy=false;
 function renderReport(value){
   $('open-report').classList.toggle('hidden',!value);$('export-report').classList.toggle('hidden',!value);
-  $('generate-report').classList.toggle('hidden',!!value);$('generate-fast-report').classList.toggle('hidden',!!value);
+  $('generate-report').classList.remove('hidden');$('generate-fast-report').classList.remove('hidden');
+  $('generate-fast-report').textContent=value?'重新生成极速表格':'极速表格（推荐）';
   $('report-status').textContent=value?`${value.title} · ${value.segments} 个镜头 · ${value.model} · 已保存`:'极速表格不再调用总结模型；完整报告会再次调用模型，镜头较多时可能需要数分钟并产生额外费用。';
 }
 $('generate-fast-report').onclick=()=>generateVisualReport('fast');

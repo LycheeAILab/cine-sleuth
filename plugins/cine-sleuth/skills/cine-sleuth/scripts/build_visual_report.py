@@ -174,6 +174,7 @@ def build(video: Path, segments_path: Path, report_path: Path, output: Path) -> 
     # HTML leads with a dense shot table. Markdown remains the portable illustrated package.
     body = markdown.markdown(html.escape(plain_report, quote=False), extensions=["tables", "fenced_code"])
     table = shot_table(frames, output)
+    narrative = "" if source_data.get("table_only") is True else '<article class="narrative">' + body + "</article>"
     document = '''<!doctype html><html lang="zh-CN"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
@@ -187,7 +188,7 @@ main{width:min(1800px,96vw);margin:24px auto 56px}.shot-section,.narrative{backg
 .narrative h1,.narrative h2,.narrative h3{line-height:1.35}.narrative h1{font-size:34px}.narrative h2{margin-top:42px;border-top:1px solid #ddd;padding-top:22px}.narrative table{display:block;overflow:auto;border-collapse:collapse;width:100%}.narrative td,.narrative th{border:1px solid #ddd;padding:10px;text-align:left}.narrative pre{padding:16px;background:#f6f6f6;overflow:auto}
 @media(max-width:720px){header{padding:28px 18px 22px}main{width:100%;margin:0}.shot-section,.narrative{border-radius:0;border-left:0;border-right:0}.section-heading{display:block;padding:18px}.legend{margin-top:10px;white-space:normal}.narrative{padding:22px}.shot-table{min-width:1320px}}
 @media print{body{background:#fff}header{padding:18px 0;color:#111;background:#fff}main{width:100%;margin:0}.shot-section,.narrative{box-shadow:none;border:0}.table-wrap{overflow:visible}.shot-table{min-width:0;font-size:8px}.shot-table th,.shot-table td{padding:4px}.frame img{width:100px}.prompt details{display:block}.narrative{padding:20px 0}@page{size:A3 landscape;margin:8mm}}
-</style><header><b>CINESLEUTH</b><h1>逐镜图文拉片</h1><p>原片首帧 · 全局时间码 · 视听语言与画面文字</p></header><main>''' + table + '<article class="narrative">' + body + "</article></main></html>"
+</style><header><b>CINESLEUTH</b><h1>逐镜图文拉片</h1><p>原片首帧 · 原片时间码 · 视听语言与画面文字</p></header><main>''' + table + narrative + "</main></html>"
     (output / "report.md").write_text(report, encoding="utf-8")
     (output / "report-text.md").write_text(plain_report, encoding="utf-8")
     (output / "report.html").write_text(document, encoding="utf-8")
