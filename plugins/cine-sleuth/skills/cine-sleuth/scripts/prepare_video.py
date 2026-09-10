@@ -256,7 +256,7 @@ def render_chunk(
             "-map",
             "0:a:0?",
             "-vf",
-            f"scale={width}:-2:force_original_aspect_ratio=decrease",
+            f"scale={width}:-2:force_original_aspect_ratio=decrease:force_divisible_by=2",
             "-c:v",
             "libx264",
             "-preset",
