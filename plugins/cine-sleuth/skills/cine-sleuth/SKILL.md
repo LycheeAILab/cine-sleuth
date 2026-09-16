@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links and deliver illustr
 
 ## Identify the installed release
 
-Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.2`.
+Read the adjacent `VERSION` file when asked which release is installed. Report that exact value. This package is release `2.2.3`.
 
 ## Deliver the requested analysis
 
@@ -105,6 +105,8 @@ The manifest stores a deterministic client request ID, the Lab task ID, and uplo
 - Cache completed chunks and resume missing ranges rather than restarting the whole video.
 
 Videos longer than 5 minutes are rejected before upload. Default segmentation uses a 90-second core target, a 45-second minimum, a 120-second maximum, and 3 seconds of overlap. Prefer a speech pause, then a visual cut, then a forced maximum-duration boundary. Use neural VAD when available and the bundled local silence detector otherwise.
+
+Analysis proxies use H.264, a maximum edge of 480 pixels (no upscaling), 25 fps, 350 kbps video and 64 kbps AAC audio. Preserve the full timeline and existing audio; do not remove silence or speed up footage. The original remains unchanged and is still used for final-report frame extraction. Proxy size and encoding time are recorded in `manifest.json`; old cached tasks retain their existing proxies and results rather than resubmitting completed analysis.
 
 ## Verify before delivery
 

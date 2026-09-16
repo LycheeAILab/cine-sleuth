@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Iterable
 
@@ -256,9 +257,11 @@ def render_chunk(
             "-map",
             "0:a:0?",
             "-vf",
-            f"scale={width}:-2:force_original_aspect_ratio=decrease:force_divisible_by=2",
+            f"scale=w='min({width},iw)':h='min({width},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=25",
             "-c:v",
             "libx264",
+            "-pix_fmt",
+            "yuv420p",
             "-preset",
             "veryfast",
             "-b:v",
@@ -290,10 +293,12 @@ def main() -> None:
     parser.add_argument("--min-silence", type=float, default=0.55)
     parser.add_argument("--silence-noise-db", type=float, default=-35.0)
     parser.add_argument("--scene-threshold", type=float, default=0.30)
-    parser.add_argument("--proxy-width", type=int, default=540)
-    parser.add_argument("--video-bitrate", default="450k")
+    parser.add_argument("--proxy-width", type=int, default=480, help="Analysis proxy maximum edge in pixels; original aspect ratio is retained")
+    parser.add_argument("--video-bitrate", default="350k")
     parser.add_argument("--audio-bitrate", default="64k")
     args = parser.parse_args()
+    if args.proxy_width < 2 or args.proxy_width > 1920:
+        raise SystemExit("Proxy edge must be between 2 and 1920 pixels.")
 
     source = args.video.expanduser().resolve()
     if not source.is_file():
@@ -340,6 +345,7 @@ def main() -> None:
     )
 
     chunks = []
+    compression_started = time.monotonic()
     for index, (core_start, core_end, boundary_reason) in enumerate(core_ranges, start=1):
         start = max(0.0, core_start - (args.overlap if index > 1 else 0.0))
         end = min(duration, core_end + (args.overlap if index < len(core_ranges) else 0.0))
@@ -354,6 +360,11 @@ def main() -> None:
             args.video_bitrate,
             args.audio_bitrate,
         )
+        proxy = probe_video(output, ffprobe)
+        if abs(proxy["duration_seconds"] - (end - start)) > 0.25:
+            raise SystemExit("Analysis proxy duration differs from source range; refusing upload.")
+        if proxy["has_audio"] != metadata["has_audio"]:
+            raise SystemExit("Analysis proxy audio stream mismatch; refusing upload.")
         chunks.append(
             {
                 "chunk_id": f"chunk-{index:03d}",
@@ -366,6 +377,7 @@ def main() -> None:
                 "overlap_before_seconds": round(core_start - start, 3),
                 "overlap_after_seconds": round(end - core_end, 3),
                 "boundary_reason": boundary_reason,
+                "proxy": proxy,
             }
         )
 
@@ -390,6 +402,16 @@ def main() -> None:
             "shot_candidate_count": len(shots),
         },
         "chunks": chunks,
+        "analysis_proxy": {
+            "profile": "compact-25fps-v1",
+            "max_edge": args.proxy_width,
+            "fps": 25,
+            "video_bitrate": args.video_bitrate,
+            "audio_bitrate": args.audio_bitrate,
+            "source_bytes": metadata["size_bytes"],
+            "proxy_bytes": sum(item["proxy"]["size_bytes"] for item in chunks),
+            "compression_seconds": round(time.monotonic() - compression_started, 3),
+        },
     }
     manifest_path = output_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

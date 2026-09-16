@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "2.2.2"
+VERSION = "2.2.3"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 

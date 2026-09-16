@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links in WorkBuddy and de
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.2`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.3`.
 
 ## Deliver the user's result
 
@@ -54,6 +54,8 @@ python "${CODEBUDDY_SKILL_DIR}/scripts/lab_auth.py"
 This opens LycheeAILab login and returns the user's revocable Lab credential to a randomized local callback. Provider credentials remain entirely behind the Lab service.
 
 Prepare local evidence and proxy chunks:
+
+Analysis proxies use a maximum edge of 480 pixels without upscaling, 25 fps, H.264 at 350 kbps and AAC at 64 kbps. Preserve the original video and its timeline; final report frames come from the original. Do not reprocess completed tasks merely to change proxy settings.
 
 ```powershell
 python "${CODEBUDDY_SKILL_DIR}/scripts/prepare_video.py" `
