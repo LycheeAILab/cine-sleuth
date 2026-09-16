@@ -1,4 +1,4 @@
-param([string]$Version = "2.2.3")
+param([string]$Version = "2.2.4")
 
 $ErrorActionPreference = "Stop"
 $rawRoot = "https://github.com/LycheeAILab/cine-sleuth/releases/download/v$Version"

@@ -31,8 +31,8 @@ def validate_video(path: Path) -> Path:
     if resolved.stat().st_size == 0:
         raise SourceError(f"Video file is empty: {resolved}")
     duration = probe_video(resolved, require_binary("ffprobe"))["duration_seconds"]
-    if not 0 < duration <= 300:
-        raise SourceError("Source video must be nonempty and no longer than 5 minutes.")
+    if not 0 < duration <= 120:
+        raise SourceError("Source video must be nonempty and no longer than 2 minutes.")
     return resolved
 
 
@@ -89,7 +89,7 @@ def download_with_ytdlp(url: str, output: Path) -> Path:
         "retries": 2,
         "max_filesize": 512 * 1024 * 1024,
         "match_filter": lambda info, **kwargs: (
-            "Video exceeds 5 minutes" if (info.get("duration") or 0) > 300 else None
+            "Video exceeds 2 minutes" if (info.get("duration") or 0) > 120 else None
         ),
     }
     try:

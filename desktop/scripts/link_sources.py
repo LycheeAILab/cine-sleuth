@@ -33,8 +33,8 @@ def download_link(text, output):
     from yt_dlp import YoutubeDL
     from yt_dlp.utils import DownloadError
     def limit(info, **kwargs):
-        if (info.get("duration") or 0) > 300:
-            raise source.SourceError("Source video must be no longer than 5 minutes.")
+        if (info.get("duration") or 0) > 120:
+            raise source.SourceError("Source video must be no longer than 2 minutes.")
     options = {"outtmpl": str(output.with_suffix(".%(ext)s")), "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b",
                "merge_output_format": "mp4", "noplaylist": True, "playlistend": 1, "quiet": True, "no_warnings": True,
                "socket_timeout": 30, "retries": 2, "max_filesize": 512 * 1024 * 1024, "match_filter": limit}

@@ -15,7 +15,7 @@ python scripts/prepare_video_source.py --douyin-url "AUTHORIZED_SHARE_LINK_OR_TE
 ```
 
 Pass the returned `video` path to `prepare_video.py`. Downloads are bounded to
-512 MiB and actual video duration to 300 seconds. On platform rejection request a
+512 MiB and actual video duration to 120 seconds. On platform rejection request a
 local video; do not bypass permissions. Resume with the existing file/manifest,
 not another download or parent task. Local input is unchanged.
 

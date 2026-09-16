@@ -39,7 +39,7 @@ async function showResult(id){const request=++resultRequest;resultId=id;resultCo
 $('login').onclick=()=>perform(async()=>notice(await api.login()));
 $('logout').onclick=()=>perform(async()=>{await api.logout();notice('已退出当前设备');$('history').replaceChildren();$('result').replaceChildren();switchView('import');selected=false;$('file-name').textContent='选择一段视频';await refresh();});
 $('devices').onclick=()=>perform(()=>api.devices());
-$('select').onclick=()=>perform(async()=>{const file=await api.select();if(file){selected=true;$('file-name').textContent=file.name;$('file-meta').textContent=`${(file.sizeBytes/1024/1024).toFixed(1)} MB · 最长 5 分钟`;}setBusy();});
+$('select').onclick=()=>perform(async()=>{const file=await api.select();if(file){selected=true;$('file-name').textContent=file.name;$('file-meta').textContent=`${(file.sizeBytes/1024/1024).toFixed(1)} MB · 最长 2 分钟`;}setBusy();});
 for(const name of ['local','link'])$('tab-'+name).onclick=()=>{mode=name;for(const item of ['local','link']){$(item+'-input').classList.toggle('hidden',item!==name);$('tab-'+item).classList.toggle('active',item===name);$('tab-'+item).setAttribute('aria-selected',String(item===name));}setBusy();};
 $('consent').onchange=setBusy;$('url').oninput=setBusy;
 $('start').onclick=()=>perform(async()=>{loading=true;setBusy();notice('');try{await api.start({mode,url:$('url').value,consent:$('consent').checked});await refresh();}finally{loading=false;setBusy();}});

@@ -10,7 +10,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "2.2.3"
+VERSION = "2.2.4"
 ARCHIVE = ROOT / "dist" / f"cine-sleuth-workbuddy-{VERSION}.zip"
 
 
@@ -84,7 +84,7 @@ def main() -> int:
     )
     require(provider_name not in public_guidance.lower(), "Installation guidance exposes an underlying provider name")
     prepare_source = (ROOT / "plugins/cine-sleuth/skills/cine-sleuth/scripts/prepare_video.py").read_text(encoding="utf-8")
-    require("duration > 300.0" in prepare_source, "Five-minute source duration limit is missing")
+    require("MAX_SOURCE_SECONDS = 120.0" in prepare_source and "validate_source_duration(duration)" in prepare_source, "Two-minute source duration limit is missing")
 
     print("Distribution OK: Codex Plugin plus self-contained WorkBuddy Skill package.")
     return 0

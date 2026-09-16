@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import shutil
 import subprocess
@@ -13,6 +14,14 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Iterable
+
+MAX_SOURCE_SECONDS = 120.0
+PROXY_PROFILE = "720p-30s-25fps-v1"
+
+
+def validate_source_duration(duration: float) -> None:
+    if not math.isfinite(duration) or not 0 < duration <= MAX_SOURCE_SECONDS:
+        raise SystemExit("CineSleuth accepts nonempty videos up to 2 minutes (120 seconds).")
 
 
 def run(command: list[str], *, capture: bool = False) -> subprocess.CompletedProcess[str]:
@@ -207,7 +216,7 @@ def choose_core_ranges(
     start = 0.0
     while duration - start > maximum:
         lower = start + minimum
-        upper = min(start + maximum, duration - minimum)
+        upper = min(start + maximum, duration)
         desired = start + target
         candidates: list[tuple[float, str, float]] = []
         for point in silence_points:
@@ -257,19 +266,19 @@ def render_chunk(
             "-map",
             "0:a:0?",
             "-vf",
-            f"scale=w='min({width},iw)':h='min({width},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=25",
+            f"scale=w='min(iw,if(gte(iw,ih),{width},{width}*9/16))':h='min(ih,if(gte(iw,ih),{width}*9/16,{width}))':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=25",
             "-c:v",
             "libx264",
             "-pix_fmt",
             "yuv420p",
             "-preset",
             "veryfast",
-            "-b:v",
-            video_bitrate,
+            "-crf",
+            "20",
             "-maxrate",
             video_bitrate,
             "-bufsize",
-            "1M",
+            "4M",
             "-c:a",
             "aac",
             "-b:a",
@@ -286,24 +295,28 @@ def main() -> None:
     parser.add_argument("video", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--vad", choices=("auto", "silero", "silence"), default="auto")
-    parser.add_argument("--target-duration", type=float, default=90.0)
-    parser.add_argument("--min-duration", type=float, default=45.0)
-    parser.add_argument("--max-duration", type=float, default=120.0)
-    parser.add_argument("--overlap", type=float, default=3.0)
+    parser.add_argument("--target-duration", type=float, default=30.0)
+    parser.add_argument("--min-duration", type=float, default=30.0)
+    parser.add_argument("--max-duration", type=float, default=30.0)
+    parser.add_argument("--overlap", type=float, default=0.0)
     parser.add_argument("--min-silence", type=float, default=0.55)
     parser.add_argument("--silence-noise-db", type=float, default=-35.0)
     parser.add_argument("--scene-threshold", type=float, default=0.30)
-    parser.add_argument("--proxy-width", type=int, default=480, help="Analysis proxy maximum edge in pixels; original aspect ratio is retained")
-    parser.add_argument("--video-bitrate", default="350k")
-    parser.add_argument("--audio-bitrate", default="64k")
+    parser.add_argument("--proxy-width", type=int, default=1280, help="Long-edge bounding box; short edge is 9/16 of this value, no upscaling")
+    parser.add_argument("--video-bitrate", default="2M", help="Peak video bitrate; quality target is CRF 20")
+    parser.add_argument("--audio-bitrate", default="96k")
     args = parser.parse_args()
     if args.proxy_width < 2 or args.proxy_width > 1920:
         raise SystemExit("Proxy edge must be between 2 and 1920 pixels.")
+    if not (0 < args.min_duration <= args.target_duration <= args.max_duration <= 30) or args.overlap != 0:
+        raise SystemExit("Analysis chunks must be at most 30 seconds with no overlap.")
 
     source = args.video.expanduser().resolve()
     if not source.is_file():
         raise SystemExit(f"Video not found: {source}")
     output_dir = args.output_dir.expanduser().resolve()
+    if (output_dir / "manifest.json").exists():
+        raise SystemExit("Existing manifest found. Resume that task, or explicitly use a new output directory; do not overwrite cached analysis.")
     chunks_dir = output_dir / "chunks"
     chunks_dir.mkdir(parents=True, exist_ok=True)
 
@@ -311,13 +324,13 @@ def main() -> None:
     ffprobe = require_binary("ffprobe")
     metadata = probe_video(source, ffprobe)
     duration = metadata["duration_seconds"]
-    if duration > 300.0:
-        raise SystemExit("CineSleuth accepts videos up to 5 minutes (300 seconds).")
+    validate_source_duration(duration)
 
     vad_backend = "none"
     vad_warning = None
     silence_points: list[float] = []
-    if metadata["has_audio"]:
+    fixed_chunks = args.min_duration == args.target_duration == args.max_duration
+    if metadata["has_audio"] and not fixed_chunks:
         if args.vad in ("auto", "silero"):
             try:
                 silence_points = silero_candidates(source, ffmpeg, duration, args.min_silence)
@@ -332,7 +345,7 @@ def main() -> None:
             )
             vad_backend = "ffmpeg-silencedetect"
 
-    shots = shot_candidates(source, ffmpeg, args.scene_threshold)
+    shots = [] if fixed_chunks else shot_candidates(source, ffmpeg, args.scene_threshold)
     silence_points = unique_candidates(silence_points)
     shots = unique_candidates(shots)
     core_ranges = choose_core_ranges(
@@ -365,6 +378,8 @@ def main() -> None:
             raise SystemExit("Analysis proxy duration differs from source range; refusing upload.")
         if proxy["has_audio"] != metadata["has_audio"]:
             raise SystemExit("Analysis proxy audio stream mismatch; refusing upload.")
+        if proxy["size_bytes"] > 12 * 1024 * 1024:
+            raise SystemExit("Analysis chunk exceeds the Lab 12 MB limit; refusing upload.")
         chunks.append(
             {
                 "chunk_id": f"chunk-{index:03d}",
@@ -382,7 +397,9 @@ def main() -> None:
         )
 
     source_sha256 = sha256_file(source)
-    client_request_id = "cine-1.0.2-" + hashlib.sha256(f"cine-sleuth:1.0.2:evidence-v3:{source_sha256}".encode("utf-8")).hexdigest()[:48]
+    # A new segmentation must never reuse old chunk IDs under the same cloud job.
+    preparation_key = f"{PROXY_PROFILE}:{args.target_duration}:{args.min_duration}:{args.max_duration}:{args.proxy_width}:{args.video_bitrate}:{args.audio_bitrate}"
+    client_request_id = "cine-720p-" + hashlib.sha256(f"{preparation_key}:{source_sha256}".encode("utf-8")).hexdigest()[:48]
     manifest = {
         "schema_version": 2,
         "client_request_id": client_request_id,
@@ -403,9 +420,11 @@ def main() -> None:
         },
         "chunks": chunks,
         "analysis_proxy": {
-            "profile": "compact-25fps-v1",
+            "profile": PROXY_PROFILE,
             "max_edge": args.proxy_width,
             "fps": 25,
+            "crf": 20,
+            "short_edge_limit": int(args.proxy_width * 9 / 16),
             "video_bitrate": args.video_bitrate,
             "audio_bitrate": args.audio_bitrate,
             "source_bytes": metadata["size_bytes"],

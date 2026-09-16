@@ -74,8 +74,8 @@ def main():
             try:
                 source, _ = link_sources.download_link(request["url"], target)
             except (prepare_video_source.SourceError, OSError, subprocess.TimeoutExpired) as error:
-                if "no longer than 5 minutes" in str(error):
-                    raise ValueError("视频不能超过 5 分钟，请换一条视频")
+                if "2 minutes" in str(error):
+                    raise ValueError("视频不能超过 2 分钟，请换一条视频")
                 print(json.dumps({"code":"LINK_RESOLUTION_FAILED","message":"链接暂时解析失败"}), file=sys.stderr)
                 sys.exit(2)
             cache_record.write_text(json.dumps({"video":str(source)}), encoding="utf-8")
