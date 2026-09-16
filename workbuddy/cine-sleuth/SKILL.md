@@ -7,7 +7,7 @@ description: Analyze local videos or authorized Douyin links in WorkBuddy and de
 
 ## Identify the installed release
 
-Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.4`.
+Read `${CODEBUDDY_SKILL_DIR}/VERSION` when asked for the installed version. This package is release `2.2.5`.
 
 ## Deliver the user's result
 
@@ -55,7 +55,7 @@ This opens LycheeAILab login and returns the user's revocable Lab credential to 
 
 Prepare local evidence and proxy chunks:
 
-New videos are limited to 2 minutes and split into consecutive 30-second chunks without overlap (the final chunk may be shorter). Proxies fit 1280×720 or 720×1280 without upscaling, at 25 fps, H.264 CRF 20 with a 2 Mbps peak and AAC 96 kbps. Preserve original timing and use the original for report frames. Technical chunk boundaries are not scene cuts. Resume cached manifests unchanged; do not reprocess completed tasks or bypass media-visibility verification.
+New videos are limited to 2 minutes and split into consecutive 15-second chunks without overlap (the final chunk may be shorter). Proxies fit 1280×720 or 720×1280 without upscaling, at 25 fps, H.264 CRF 20 with a 2 Mbps peak and AAC 96 kbps. Preserve original timing and use the original for report frames. Technical chunk boundaries are not scene cuts. Resume cached manifests unchanged; do not reprocess completed tasks or bypass media-visibility verification.
 
 ```powershell
 python "${CODEBUDDY_SKILL_DIR}/scripts/prepare_video.py" `

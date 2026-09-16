@@ -295,9 +295,9 @@ def main() -> None:
     parser.add_argument("video", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--vad", choices=("auto", "silero", "silence"), default="auto")
-    parser.add_argument("--target-duration", type=float, default=30.0)
-    parser.add_argument("--min-duration", type=float, default=30.0)
-    parser.add_argument("--max-duration", type=float, default=30.0)
+    parser.add_argument("--target-duration", type=float, default=15.0)
+    parser.add_argument("--min-duration", type=float, default=15.0)
+    parser.add_argument("--max-duration", type=float, default=15.0)
     parser.add_argument("--overlap", type=float, default=0.0)
     parser.add_argument("--min-silence", type=float, default=0.55)
     parser.add_argument("--silence-noise-db", type=float, default=-35.0)
@@ -308,8 +308,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.proxy_width < 2 or args.proxy_width > 1920:
         raise SystemExit("Proxy edge must be between 2 and 1920 pixels.")
-    if not (0 < args.min_duration <= args.target_duration <= args.max_duration <= 30) or args.overlap != 0:
-        raise SystemExit("Analysis chunks must be at most 30 seconds with no overlap.")
+    if not (0 < args.min_duration <= args.target_duration <= args.max_duration <= 15) or args.overlap != 0:
+        raise SystemExit("Analysis chunks must be at most 15 seconds with no overlap.")
 
     source = args.video.expanduser().resolve()
     if not source.is_file():

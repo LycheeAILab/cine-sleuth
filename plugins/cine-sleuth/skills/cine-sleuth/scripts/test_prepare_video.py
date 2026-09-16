@@ -28,17 +28,18 @@ class RenderChunkTests(unittest.TestCase):
                         with self.assertRaisesRegex(SourceError, "2 minutes"):
                             validate_video(source)
 
-    def test_two_minute_limit_and_exact_thirty_second_coverage(self):
-        for duration in (0.01, 30, 30.01, 31, 60, 119.99, 120):
+    def test_two_minute_limit_and_exact_fifteen_second_coverage(self):
+        for duration in (0.01, 15, 15.01, 30, 30.01, 31, 60, 101.75, 119.99, 120):
             validate_source_duration(duration)
-            ranges = choose_core_ranges(duration, [29, 32], [25, 55], 30, 30, 30)
+            ranges = choose_core_ranges(duration, [14, 32], [25, 55], 15, 15, 15)
             self.assertEqual(ranges[0][0], 0)
             self.assertEqual(ranges[-1][1], duration)
             for i, (start, end, _) in enumerate(ranges):
                 self.assertGreater(end-start, 0)
-                self.assertLessEqual(end-start, 30)
+                self.assertLessEqual(end-start, 15)
                 if i: self.assertEqual(start, ranges[i-1][1])
-            if duration == 120: self.assertEqual(len(ranges), 4)
+            if duration == 120: self.assertEqual(len(ranges), 8)
+            if duration == 101.75: self.assertEqual(len(ranges), 7)
         for duration in (0, -1, 120.01, 300, float('nan'), float('inf')):
             with self.assertRaises(SystemExit): validate_source_duration(duration)
 

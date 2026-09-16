@@ -10,12 +10,12 @@
   把视频交给 Agent，说一句你想分析什么。<br />
   CineSleuth 自动提取台词、重建场景、拆解镜头，并由当前 Agent 完成全片理解与报告。
 
-  [![Version](https://img.shields.io/badge/version-2.2.4-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.2.4)
+  [![Version](https://img.shields.io/badge/version-2.2.5-D4A72C?style=for-the-badge)](https://github.com/LycheeAILab/cine-sleuth/releases/tag/v2.2.5)
   [![Codex Plugin](https://img.shields.io/badge/Codex-Plugin-111827?style=for-the-badge)](#-安装)
   [![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-2563EB?style=for-the-badge)](#workbuddy)
   [![License: MIT](https://img.shields.io/badge/License-MIT-16A34A?style=for-the-badge)](LICENSE)
 
-  [![下载 Windows 客户端](https://img.shields.io/badge/Windows-下载桌面端-2563EB?style=for-the-badge)](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.12-Windows-x64-Setup.exe)
+  [![下载 Windows 客户端](https://img.shields.io/badge/Windows-下载桌面端-2563EB?style=for-the-badge)](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.13-Windows-x64-Setup.exe)
 
   [核心能力](#-核心能力) · [一句话拉片](#-一句话拉片) · [安装](#-安装) · [工作方式](#-agent-如何完成拉片)
 </div>
@@ -26,20 +26,20 @@
 
 不使用 Codex 或 WorkBuddy，也可以通过 **镜探 · CineSleuth Windows 客户端**分析视频。
 
-**[下载 Windows 客户端 · 2.0.12（x64）](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.12-Windows-x64-Setup.exe)**
+**[下载 Windows 客户端 · 2.0.13（x64）](https://prod-lab-1321001571.cos.ap-guangzhou.myqcloud.com/releases/cine-sleuth/windows/x64/CineSleuth-2.0.13-Windows-x64-Setup.exe)**
 
 - 使用现有 **LycheeAILab 账号**登录，无需手动复制 Lab API Key。
 - 支持本地视频、授权抖音链接、云端分析结果、历史记录和 JSON 导出。
 - 可自行配置硅基流动 Key，生成参考专业拉片表的横向彩色 HTML：逐镜首帧、时间、景别、运动特效、画面、口播字幕、BGM、音效、画面花字及视频生成提示词一屏对照；图片内嵌、可离线打开，并保留完整文字总结与 Markdown 导出。需保留本机任务时间清单和原片，最终报告不会自动上传。
 - Lab 浅蓝白主题，左下角下载图标可查看更新进度；新版下载后点击“重启安装”。
 
-> Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.12`，功能范围见 [桌面说明](desktop/README.md)。
+> Windows x64 安装包尚未代码签名，Windows 可能显示发布者验证提示。请仅从上述官方 COS 地址下载；桌面版与 Skill 版本号独立。桌面发布标签为 `desktop-v2.0.13`，功能范围见 [桌面说明](desktop/README.md)。
 
 ## ✨ 核心能力
 
-### 2.2.4 · 720P 分段分析
+### 2.2.5 · 720P 分段分析
 
-新视频最多 2 分钟，每段 30 秒，以 720P、25 fps、H.264 CRF 20（峰值 2 Mbps）和 AAC 96 kbps 提交分析。保留原片和时间轴，旧任务不自动重跑。
+新视频最多 2 分钟，每段 15 秒，以 720P、25 fps、H.264 CRF 20（峰值 2 Mbps）和 AAC 96 kbps 提交分析。保留原片和时间轴，旧任务不自动重跑。
 
 ### 2.2.3 · 轻量视频分析（历史版本）
 
@@ -114,7 +114,7 @@ flowchart LR
 ```
 
 - **短视频**：通常作为一个完整片段分析。
-- **较长视频**：2 分钟以内，每 30 秒切分，采用 720P / 25 fps 分析副本。
+- **较长视频**：2 分钟以内，每 15 秒切分，采用 720P / 25 fps 分析副本。
 - **跨段台词**：利用重叠证据拼接，不凭空补写。
 - **跨段场景**：由当前 Agent 根据地点、时间、人物和声音连续性合并。
 - **最终总结**：始终由正在服务你的 Agent 完成，不把分段结果简单拼接。
@@ -129,7 +129,7 @@ flowchart LR
 
 在 Codex 桌面端新建任务并发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.4/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.5/INSTALL.md，帮我安装或升级 CineSleuth 插件并创建一个新任务。
 
 #### 手动安装
 
@@ -146,9 +146,9 @@ codex plugin add cine-sleuth@cine-sleuth
 
 在 WorkBuddy 中发送：
 
-> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.4/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.2.4；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
+> 阅读 https://raw.githubusercontent.com/LycheeAILab/cine-sleuth/v2.2.5/WORKBUDDY_INSTALL.md，帮我安装 CineSleuth 2.2.5；通过 LycheeAILab 完成授权后只运行本地 doctor，不要上传或分析真实视频。
 
-也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.2.4/cine-sleuth-workbuddy-2.2.4.zip)，然后在 WorkBuddy 的 Skills 页面上传。
+也可以下载 [CineSleuth WorkBuddy Skill ZIP](https://github.com/LycheeAILab/cine-sleuth/releases/download/v2.2.5/cine-sleuth-workbuddy-2.2.5.zip)，然后在 WorkBuddy 的 Skills 页面上传。
 
 ## 🎯 分析模式
 
